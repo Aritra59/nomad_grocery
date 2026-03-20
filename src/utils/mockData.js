@@ -1,0 +1,323 @@
+// ── Mock Sheet Data ──
+export const MOCK_SHEET_DATA = {
+  shopName: "Sharma Kirana",
+  ownerName: "Ramesh Sharma",
+  address: "14, Gandhi Nagar, Pune",
+  mobile: "9876543210",
+  shopId: "SKRS00001",
+  baseSlots: 100,
+  packs: [
+    {
+      id: 1,
+      slots: 100,
+      availed: "2026-03-01",
+      expiry: "2026-03-29",
+    },
+  ],
+};
+
+// ── Mock Inventory (5 real-life products) ──
+export const MOCK_INVENTORY = [
+  {
+    id: 1,
+    name: "Aashirvaad Atta",
+    brand: "Aashirvaad",
+    packingQty: "5 kg",
+    mrp: 270,
+    category: "Grocery",
+    subCategory: "Flour",
+    variant1: "",
+    variant2: "",
+    currStock: 12,
+    reorderLevel: 4,
+    suppliers: ["Rajesh Traders"],
+    fastSelling: true,
+  },
+  {
+    id: 2,
+    name: "Tata Salt",
+    brand: "Tata",
+    packingQty: "1 kg",
+    mrp: 22,
+    category: "Grocery",
+    subCategory: "Sugar & Salt",
+    variant1: "",
+    variant2: "",
+    currStock: 3,
+    reorderLevel: 5,
+    suppliers: ["Rajesh Traders"],
+    fastSelling: false,
+  },
+  {
+    id: 3,
+    name: "Parle-G Biscuit",
+    brand: "Parle",
+    packingQty: "100 g",
+    mrp: 20,
+    category: "Snacks",
+    subCategory: "Biscuits",
+    variant1: "",
+    variant2: "",
+    currStock: 24,
+    reorderLevel: 10,
+    suppliers: ["Suresh Distributors"],
+    fastSelling: true,
+  },
+  {
+    id: 4,
+    name: "Surf Excel Detergent",
+    brand: "Surf Excel",
+    packingQty: "1 kg",
+    mrp: 185,
+    category: "Household",
+    subCategory: "Detergent",
+    variant1: "",
+    variant2: "",
+    currStock: 0,
+    reorderLevel: 3,
+    suppliers: ["Suresh Distributors"],
+    fastSelling: false,
+  },
+  {
+    id: 5,
+    name: "Amul Butter",
+    brand: "Amul",
+    packingQty: "100 g",
+    mrp: 55,
+    category: "Dairy",
+    subCategory: "Butter",
+    variant1: "",
+    variant2: "",
+    currStock: 8,
+    reorderLevel: 4,
+    suppliers: ["Dairy Fresh Suppliers"],
+    fastSelling: true,
+  },
+];
+
+// ── Mock Customers (5 real-life) ──
+export const MOCK_CUSTOMERS = [
+  {
+    id: 1,
+    name: "Priya Menon",
+    mobile: "9845012345",
+    address: "22, Rose Apartments, Pune",
+    totalOrders: 8,
+    totalCredit: 340,
+    creditLimit: 500,
+    joinDate: "2025-11-15",
+  },
+  {
+    id: 2,
+    name: "Suresh Pillai",
+    mobile: "9712345678",
+    address: "5, Shivaji Colony, Pune",
+    totalOrders: 14,
+    totalCredit: 0,
+    creditLimit: 500,
+    joinDate: "2025-09-01",
+  },
+  {
+    id: 3,
+    name: "Anita Desai",
+    mobile: "9823456789",
+    address: "Block B, Sai Nagar, Pune",
+    totalOrders: 5,
+    totalCredit: 175,
+    creditLimit: 300,
+    joinDate: "2026-01-10",
+  },
+  {
+    id: 4,
+    name: "Mohan Iyer",
+    mobile: "9934567890",
+    address: "12, Laxmi Road, Pune",
+    totalOrders: 21,
+    totalCredit: 0,
+    creditLimit: 1000,
+    joinDate: "2025-07-20",
+  },
+  {
+    id: 5,
+    name: "Kavitha Nair",
+    mobile: "9667890123",
+    address: "Flat 3A, Green Park, Pune",
+    totalOrders: 3,
+    totalCredit: 95,
+    creditLimit: 200,
+    joinDate: "2026-02-28",
+  },
+];
+
+// ── Mock Orders (5 real-life) ──
+export const MOCK_ORDERS = [
+  {
+    id: 1,
+    orderNumber: "SK-PM-001",
+    customerName: "Priya Menon",
+    mobile: "9845012345",
+    address: "22, Rose Apartments, Pune",
+    items: [
+      { name: "Aashirvaad Atta", brand: "Aashirvaad", packingQty: "5 kg", mrp: 270, qty: 1 },
+      { name: "Tata Salt", brand: "Tata", packingQty: "1 kg", mrp: 22, qty: 2 },
+    ],
+    total: 314,
+    paid: 0,
+    credit: 314,
+    status: "completed",
+    paymentStatus: "credit",
+    sellerCreated: false,
+    date: "2026-03-14",
+  },
+  {
+    id: 2,
+    orderNumber: "SK-SP-001",
+    customerName: "Suresh Pillai",
+    mobile: "9712345678",
+    address: "5, Shivaji Colony, Pune",
+    items: [
+      { name: "Parle-G Biscuit", brand: "Parle", packingQty: "100 g", mrp: 20, qty: 5 },
+      { name: "Amul Butter", brand: "Amul", packingQty: "100 g", mrp: 55, qty: 1 },
+    ],
+    total: 155,
+    paid: 155,
+    credit: 0,
+    status: "completed",
+    paymentStatus: "paid",
+    sellerCreated: false,
+    date: "2026-03-15",
+  },
+  {
+    id: 3,
+    orderNumber: "SK-AD-001",
+    customerName: "Anita Desai",
+    mobile: "9823456789",
+    address: "Block B, Sai Nagar, Pune",
+    items: [{ name: "Surf Excel Detergent", brand: "Surf Excel", packingQty: "1 kg", mrp: 185, qty: 1 }],
+    total: 185,
+    paid: 0,
+    credit: 0,
+    status: "pending",
+    paymentStatus: "unpaid",
+    sellerCreated: true,
+    date: "2026-03-16",
+  },
+  {
+    id: 4,
+    orderNumber: "SK-MI-001",
+    customerName: "Mohan Iyer",
+    mobile: "9934567890",
+    address: "12, Laxmi Road, Pune",
+    items: [
+      { name: "Aashirvaad Atta", brand: "Aashirvaad", packingQty: "5 kg", mrp: 270, qty: 2 },
+      { name: "Tata Salt", brand: "Tata", packingQty: "1 kg", mrp: 22, qty: 1 },
+      { name: "Parle-G Biscuit", brand: "Parle", packingQty: "100 g", mrp: 20, qty: 3 },
+    ],
+    total: 622,
+    paid: 622,
+    credit: 0,
+    status: "completed",
+    paymentStatus: "paid",
+    sellerCreated: false,
+    date: "2026-03-13",
+  },
+  {
+    id: 5,
+    orderNumber: "SK-KN-001",
+    customerName: "Kavitha Nair",
+    mobile: "9667890123",
+    address: "Flat 3A, Green Park, Pune",
+    items: [
+      { name: "Amul Butter", brand: "Amul", packingQty: "100 g", mrp: 55, qty: 2 },
+      { name: "Parle-G Biscuit", brand: "Parle", packingQty: "100 g", mrp: 20, qty: 2 },
+    ],
+    total: 150,
+    paid: 0,
+    credit: 150,
+    status: "pending",
+    paymentStatus: "credit",
+    sellerCreated: true,
+    date: "2026-03-16",
+  },
+];
+
+// ── Master Products (57 items — unchanged) ──
+export const MASTER_PRODUCTS = [
+  // ── Grocery – Rice & Grains ──
+  { id: "rice-1kg", name: "Rice", brand: "Generic", packingQty: "1 kg", mrp: 60, category: "Grocery", subCategory: "Rice", variant1: "", variant2: "" },
+  { id: "rice-5kg", name: "Rice", brand: "India Gate", packingQty: "5 kg", mrp: 290, category: "Grocery", subCategory: "Rice", variant1: "", variant2: "" },
+  { id: "poha-500g", name: "Poha", brand: "Generic", packingQty: "500 g", mrp: 35, category: "Grocery", subCategory: "Rice", variant1: "", variant2: "" },
+  { id: "sooji-500g", name: "Sooji", brand: "Generic", packingQty: "500 g", mrp: 30, category: "Grocery", subCategory: "Rice", variant1: "", variant2: "" },
+
+  // ── Grocery – Flour ──
+  { id: "atta-1kg", name: "Atta", brand: "Aashirvaad", packingQty: "1 kg", mrp: 58, category: "Grocery", subCategory: "Flour", variant1: "", variant2: "" },
+  { id: "atta-5kg", name: "Atta", brand: "Aashirvaad", packingQty: "5 kg", mrp: 270, category: "Grocery", subCategory: "Flour", variant1: "", variant2: "" },
+  { id: "maida-1kg", name: "Maida", brand: "Generic", packingQty: "1 kg", mrp: 40, category: "Grocery", subCategory: "Flour", variant1: "", variant2: "" },
+  { id: "besan-500g", name: "Besan", brand: "Generic", packingQty: "500 g", mrp: 55, category: "Grocery", subCategory: "Flour", variant1: "", variant2: "" },
+
+  // ── Grocery – Sugar & Salt ──
+  { id: "sugar-1kg", name: "Sugar", brand: "Generic", packingQty: "1 kg", mrp: 50, category: "Grocery", subCategory: "Sugar & Salt", variant1: "", variant2: "" },
+  { id: "salt-1kg", name: "Salt", brand: "Tata", packingQty: "1 kg", mrp: 22, category: "Grocery", subCategory: "Sugar & Salt", variant1: "", variant2: "" },
+  { id: "jaggery-500g", name: "Jaggery", brand: "Generic", packingQty: "500 g", mrp: 45, category: "Grocery", subCategory: "Sugar & Salt", variant1: "", variant2: "" },
+
+  // ── Grocery – Dal & Pulses ──
+  { id: "toor-dal-1kg", name: "Toor Dal", brand: "Generic", packingQty: "1 kg", mrp: 130, category: "Grocery", subCategory: "Dal & Pulses", variant1: "", variant2: "" },
+  { id: "moong-dal-500g", name: "Moong Dal", brand: "Generic", packingQty: "500 g", mrp: 75, category: "Grocery", subCategory: "Dal & Pulses", variant1: "", variant2: "" },
+  { id: "chana-dal-1kg", name: "Chana Dal", brand: "Generic", packingQty: "1 kg", mrp: 110, category: "Grocery", subCategory: "Dal & Pulses", variant1: "", variant2: "" },
+  { id: "masoor-dal-500g", name: "Masoor Dal", brand: "Generic", packingQty: "500 g", mrp: 65, category: "Grocery", subCategory: "Dal & Pulses", variant1: "", variant2: "" },
+
+  // ── Grocery – Oil ──
+  { id: "sunflower-oil-1l", name: "Sunflower Oil", brand: "Saffola", packingQty: "1 L", mrp: 175, category: "Grocery", subCategory: "Oil", variant1: "", variant2: "" },
+  { id: "coconut-oil-500ml", name: "Coconut Oil", brand: "Parachute", packingQty: "500 ml", mrp: 130, category: "Grocery", subCategory: "Oil", variant1: "", variant2: "" },
+  { id: "groundnut-oil-1l", name: "Groundnut Oil", brand: "Generic", packingQty: "1 L", mrp: 190, category: "Grocery", subCategory: "Oil", variant1: "", variant2: "" },
+  { id: "mustard-oil-1l", name: "Mustard Oil", brand: "Patanjali", packingQty: "1 L", mrp: 160, category: "Grocery", subCategory: "Oil", variant1: "", variant2: "" },
+
+  // ── Spices ──
+  { id: "turmeric-100g", name: "Turmeric Powder", brand: "Everest", packingQty: "100 g", mrp: 45, category: "Spices", subCategory: "Powder", variant1: "", variant2: "" },
+  { id: "chilli-100g", name: "Red Chilli Powder", brand: "Everest", packingQty: "100 g", mrp: 55, category: "Spices", subCategory: "Powder", variant1: "", variant2: "" },
+  { id: "coriander-100g", name: "Coriander Powder", brand: "MDH", packingQty: "100 g", mrp: 40, category: "Spices", subCategory: "Powder", variant1: "", variant2: "" },
+  { id: "garam-masala-50g", name: "Garam Masala", brand: "MDH", packingQty: "50 g", mrp: 50, category: "Spices", subCategory: "Masala", variant1: "", variant2: "" },
+  { id: "cumin-100g", name: "Cumin Seeds", brand: "Generic", packingQty: "100 g", mrp: 35, category: "Spices", subCategory: "Whole", variant1: "", variant2: "" },
+  { id: "mustard-seeds-100g", name: "Mustard Seeds", brand: "Generic", packingQty: "100 g", mrp: 25, category: "Spices", subCategory: "Whole", variant1: "", variant2: "" },
+
+  // ── Beverages ──
+  { id: "tea-250g", name: "Tea", brand: "Tata Tea", packingQty: "250 g", mrp: 120, category: "Beverages", subCategory: "Tea", variant1: "", variant2: "" },
+  { id: "coffee-100g", name: "Coffee", brand: "Nescafe", packingQty: "100 g", mrp: 230, category: "Beverages", subCategory: "Coffee", variant1: "", variant2: "" },
+  { id: "milk-500ml", name: "Milk", brand: "Amul", packingQty: "500 ml", mrp: 28, category: "Beverages", subCategory: "Milk", variant1: "", variant2: "" },
+  { id: "horlicks-200g", name: "Horlicks", brand: "Horlicks", packingQty: "200 g", mrp: 145, category: "Beverages", subCategory: "Health Drink", variant1: "", variant2: "" },
+
+  // ── Snacks ──
+  { id: "biscuit-parle-g", name: "Parle-G Biscuit", brand: "Parle", packingQty: "100 g", mrp: 20, category: "Snacks", subCategory: "Biscuits", variant1: "", variant2: "" },
+  { id: "biscuit-oreo", name: "Oreo Biscuit", brand: "Cadbury", packingQty: "120 g", mrp: 35, category: "Snacks", subCategory: "Biscuits", variant1: "", variant2: "" },
+  { id: "namkeen-200g", name: "Namkeen", brand: "Haldirams", packingQty: "200 g", mrp: 55, category: "Snacks", subCategory: "Namkeen", variant1: "", variant2: "" },
+  { id: "chips-lays", name: "Chips", brand: "Lays", packingQty: "26 g", mrp: 20, category: "Snacks", subCategory: "Chips", variant1: "", variant2: "" },
+  { id: "maggi-70g", name: "Maggi Noodles", brand: "Nestle", packingQty: "70 g", mrp: 14, category: "Snacks", subCategory: "Noodles", variant1: "", variant2: "" },
+
+  // ── Personal Care ──
+  { id: "soap-lux", name: "Soap", brand: "Lux", packingQty: "100 g", mrp: 45, category: "Personal Care", subCategory: "Soap", variant1: "", variant2: "" },
+  { id: "soap-lifebuoy", name: "Soap", brand: "Lifebuoy", packingQty: "100 g", mrp: 40, category: "Personal Care", subCategory: "Soap", variant1: "", variant2: "" },
+  { id: "shampoo-clinic", name: "Shampoo", brand: "Clinic Plus", packingQty: "180 ml", mrp: 130, category: "Personal Care", subCategory: "Shampoo", variant1: "", variant2: "" },
+  { id: "shampoo-sunsilk", name: "Shampoo", brand: "Sunsilk", packingQty: "180 ml", mrp: 140, category: "Personal Care", subCategory: "Shampoo", variant1: "", variant2: "" },
+  { id: "toothpaste-colgate", name: "Toothpaste", brand: "Colgate", packingQty: "100 g", mrp: 75, category: "Personal Care", subCategory: "Toothpaste", variant1: "", variant2: "" },
+  { id: "toothpaste-pepsodent", name: "Toothpaste", brand: "Pepsodent", packingQty: "100 g", mrp: 70, category: "Personal Care", subCategory: "Toothpaste", variant1: "", variant2: "" },
+  { id: "fairness-cream-fair-lovely", name: "Face Cream", brand: "Glow & Lovely", packingQty: "25 g", mrp: 55, category: "Personal Care", subCategory: "Cream", variant1: "", variant2: "" },
+
+  // ── Household ──
+  { id: "detergent-surf-1kg", name: "Detergent Powder", brand: "Surf Excel", packingQty: "1 kg", mrp: 185, category: "Household", subCategory: "Detergent", variant1: "", variant2: "" },
+  { id: "detergent-ariel-1kg", name: "Detergent Powder", brand: "Ariel", packingQty: "1 kg", mrp: 195, category: "Household", subCategory: "Detergent", variant1: "", variant2: "" },
+  { id: "dishwash-vim", name: "Dishwash Bar", brand: "Vim", packingQty: "200 g", mrp: 35, category: "Household", subCategory: "Dishwash", variant1: "", variant2: "" },
+  { id: "floor-cleaner-phenyl", name: "Floor Cleaner", brand: "Phenyl", packingQty: "500 ml", mrp: 60, category: "Household", subCategory: "Cleaner", variant1: "", variant2: "" },
+  { id: "mosquito-coil", name: "Mosquito Coil", brand: "Good Knight", packingQty: "10 pcs", mrp: 40, category: "Household", subCategory: "Pest Control", variant1: "", variant2: "" },
+  { id: "agarbatti", name: "Agarbatti", brand: "Cycle", packingQty: "20 sticks", mrp: 30, category: "Household", subCategory: "Pooja", variant1: "", variant2: "" },
+
+  // ── Dairy ──
+  { id: "butter-amul-100g", name: "Butter", brand: "Amul", packingQty: "100 g", mrp: 55, category: "Dairy", subCategory: "Butter", variant1: "", variant2: "" },
+  { id: "paneer-200g", name: "Paneer", brand: "Amul", packingQty: "200 g", mrp: 90, category: "Dairy", subCategory: "Paneer", variant1: "", variant2: "" },
+  { id: "curd-400g", name: "Curd", brand: "Amul", packingQty: "400 g", mrp: 45, category: "Dairy", subCategory: "Curd", variant1: "", variant2: "" },
+  { id: "ghee-500ml", name: "Ghee", brand: "Amul", packingQty: "500 ml", mrp: 340, category: "Dairy", subCategory: "Ghee", variant1: "", variant2: "" },
+
+  // ── Packaged Food ──
+  { id: "tomato-sauce-ketchup", name: "Tomato Ketchup", brand: "Kissan", packingQty: "500 g", mrp: 115, category: "Packaged Food", subCategory: "Sauce", variant1: "", variant2: "" },
+  { id: "pickle-mango-200g", name: "Mango Pickle", brand: "Priya", packingQty: "200 g", mrp: 65, category: "Packaged Food", subCategory: "Pickle", variant1: "", variant2: "" },
+  { id: "papad-200g", name: "Papad", brand: "Lijjat", packingQty: "200 g", mrp: 50, category: "Packaged Food", subCategory: "Papad", variant1: "", variant2: "" },
+];
