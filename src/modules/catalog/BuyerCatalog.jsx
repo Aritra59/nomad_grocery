@@ -19,6 +19,7 @@ function BuyerCatalog({ sheetData: propSheetData, onClose, previewMode, onSaveCa
   // Read shop data from URL if opened as buyer link
   const urlShopData = useMemo(() => getShopDataFromUrl(), []);
   const sheetData = previewMode ? propSheetData : urlShopData.mobile ? urlShopData : propSheetData;
+  const sharedPayload = !previewMode ? urlShopData?.payload : null;
 
   const [mobile, setMobile] = useState("");
   const [custName, setCustName] = useState("");
@@ -34,7 +35,20 @@ function BuyerCatalog({ sheetData: propSheetData, onClose, previewMode, onSaveCa
 
   const activeIds = previewMode ? Object.keys(draft).filter((id) => !!draft[id]) : savedIds.map(String);
 
-  const catalogItems = useMemo(() => items.filter((p) => activeIds.includes(String(p.id))), [items, activeIds]);
+  const catalogItems = useMemo(() => {
+    if (!previewMode && Array.isArray(sharedPayload?.items) && sharedPayload.items.length > 0) {
+      return sharedPayload.items.map((p, idx) => ({
+        id: p.id || `shared-${idx}`,
+        name: p.name || "",
+        brand: p.brand || "",
+        category: p.category || "",
+        packingQty: p.packingQty || "",
+        mrp: Number(p.mrp) || 0,
+        currStock: Number(p.currStock) || 0,
+      }));
+    }
+    return items.filter((p) => activeIds.includes(String(p.id)));
+  }, [items, activeIds, previewMode, sharedPayload]);
 
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase();
@@ -90,7 +104,7 @@ function BuyerCatalog({ sheetData: propSheetData, onClose, previewMode, onSaveCa
   };
 
   const setQty = (id, qty) => {
-    const item = items.find((p) => p.id === id);
+    const item = catalogItems.find((p) => p.id === id);
     const max = item?.currStock || 0;
     const clamped = Math.max(0, Math.min(qty, max));
     setCart((prev) => ({ ...prev, [id]: clamped }));
@@ -110,7 +124,7 @@ function BuyerCatalog({ sheetData: propSheetData, onClose, previewMode, onSaveCa
     }
     const errs = [];
     cartItems.forEach((p) => {
-      const fresh = items.find((i) => i.id === p.id);
+      const fresh = catalogItems.find((i) => i.id === p.id);
       const requested = cart[p.id] || 0;
       const available = fresh?.currStock || 0;
       if (requested > available) errs.push(p.name + ": requested " + requested + ", available " + available);

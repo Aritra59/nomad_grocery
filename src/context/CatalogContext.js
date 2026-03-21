@@ -25,6 +25,14 @@ export function CatalogProvider({ children }) {
   const [savedAt, setSavedAt] = useState(() => loaded.savedAt || null);
   const [draft, setDraft] = useState(() => loaded.selected || {});
 
+  useEffect(() => {
+    const scoped = load(mode, shopId);
+    const nextSelected = scoped.selected && typeof scoped.selected === "object" ? scoped.selected : {};
+    setSelected(nextSelected);
+    setDraft(nextSelected);
+    setSavedAt(scoped.savedAt || null);
+  }, [mode, shopId]);
+
   // Keep catalog selection consistent when products are deleted from inventory.
   useEffect(() => {
     const handler = (evt) => {

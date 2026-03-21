@@ -68,16 +68,31 @@ function App() {
     const catalog = params.get("catalog");
     const customerId = params.get("customerId");
     const share = params.get("share");
+    const payload = params.get("payload");
+    const shareShop = params.get("shop");
+    const shareOwner = params.get("owner");
+    const shareShopId = params.get("shopId");
 
     // Shared customer history link
-    if (share === "customer" && customerId) {
+    if (share === "customer" && (customerId || payload)) {
       setIsSharedHistory(true);
       setSharedCustomerId(customerId);
       return;
     }
 
     // Buyer catalog link
-    if (share === "catalog" && catalog) {
+    if (share === "catalog" && (catalog || payload)) {
+      // Shared catalog should run in live scope so placed orders land
+      // in the same shop-scoped local storage as seller orders.
+      // Use minimal sheetData from URL only — no demo packs in live mode.
+      setMode("live");
+      setSheetData({
+        shopName: shareShop || "Shop",
+        ownerName: shareOwner || "",
+        mobile: catalog || "",
+        shopId: shareShopId || catalog || "",
+        packs: [],
+      });
       setIsBuyerMode(true);
       return;
     }
@@ -173,12 +188,9 @@ function App() {
   };
 
   const handleLogin = async (code, data) => {
-    if (data) {
-      setSheetData(data);
-    } else {
-      const stored = getStoredSheetData();
-      setSheetData(stored || { ...MOCK_SHEET_DATA, sheetCode: code });
-    }
+    const resolvedData = data || getStoredSheetData();
+    if (!resolvedData) return;
+    setSheetData(resolvedData);
     setMode("live");
     localStorage.setItem(SHEET_LOGIN_KEY, code);
     // Always return to the first landing page after login

@@ -326,6 +326,20 @@ function ProcurementList({ mode, onBack, sheetData, onGoToInventory }) {
 
   const filteredSavedOrders = useMemo(() => {
     let list = [...savedOrders];
+    const now = new Date();
+    if (savedPeriod === "today") {
+      const start = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+      list = list.filter((o) => new Date(o.date) >= start);
+    } else if (savedPeriod === "week") {
+      list = list.filter((o) => new Date(o.date) >= new Date(now.getTime() - 7 * 86400000));
+    } else if (savedPeriod === "month") {
+      list = list.filter((o) => {
+        const d = new Date(o.date);
+        return d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear();
+      });
+    } else if (savedPeriod === "year") {
+      list = list.filter((o) => new Date(o.date).getFullYear() === now.getFullYear());
+    }
     if (savedFilterMode === "ordered") list = list.filter((o) => o.status === "ordered");
     else if (savedFilterMode === "pending") list = list.filter((o) => o.status !== "ordered");
     if (savedSearch.trim()) {
@@ -338,7 +352,7 @@ function ProcurementList({ mode, onBack, sheetData, onGoToInventory }) {
     if (savedSortBy === "recent") list.sort((a, b) => (savedSortDir === "desc" ? new Date(b.date) - new Date(a.date) : new Date(a.date) - new Date(b.date)));
     else if (savedSortBy === "items") list.sort((a, b) => (savedSortDir === "desc" ? (b.items?.length || 0) - (a.items?.length || 0) : (a.items?.length || 0) - (b.items?.length || 0)));
     return list;
-  }, [savedOrders, savedFilterMode, savedSearch, savedSupplierFilter, savedSortBy, savedSortDir]);
+  }, [savedOrders, savedPeriod, savedFilterMode, savedSearch, savedSupplierFilter, savedSortBy, savedSortDir]);
 
   const PROC_STATUS = {
     pending: { bg: "rgba(245,158,11,0.12)", color: "#fde68a", border: "#f59e0b" },
@@ -351,28 +365,28 @@ function ProcurementList({ mode, onBack, sheetData, onGoToInventory }) {
 
       {toast && <div className="toast">{toast}</div>}
 
-      {/* Row 3 — Back arrow + KPIs (scrollable) */}
-      <div className="page-header-row">
-        <span className="back-arrow-gradient" onClick={onBack}>
-          <BackIcon size={20} strokeWidth={3} />
-        </span>
-        <div style={{ display: "flex", gap: 6, flex: 1, overflowX: "auto" }}>
-          {[
-            { label: "Products", value: items.length, color: "#00b4d8" },
-            { label: "Low Stock", value: lowStockCount, color: "#f59e0b" },
-            { label: "Out of Stock", value: outOfStockCount, color: "#ef4444" },
-            { label: "Fast Moving", value: fastMovingCount, color: "#06d6a0" },
-          ].map((k) => (
-            <div key={k.label} style={{ flexShrink: 0, background: "#111827", border: "1px solid " + k.color + "44", borderRadius: 8, padding: "4px 10px", textAlign: "center", minWidth: 64 }}>
-              <div style={{ fontSize: 13, fontWeight: 700, color: k.color }}>{k.value}</div>
-              <div style={{ fontSize: 9, color: "#475569" }}>{k.label}</div>
-            </div>
-          ))}
+      {/* Sticky: header + tabs + search + filters — only product/saved list scrolls */}
+      <div className="sticky-header" style={{ paddingBottom: 8 }}>
+        <div className="page-header-row" style={{ marginBottom: 8 }}>
+          <span className="back-arrow-gradient" onClick={onBack}>
+            <BackIcon size={20} strokeWidth={3} />
+          </span>
+          <div style={{ display: "flex", gap: 6, flex: 1, overflowX: "auto" }}>
+            {[
+              { label: "Products", value: inventoryItems.length, color: "#00b4d8" },
+              { label: "Low Stock", value: lowStockCount, color: "#f59e0b" },
+              { label: "Out of Stock", value: outOfStockCount, color: "#ef4444" },
+              { label: "Fast Moving", value: fastMovingCount, color: "#06d6a0" },
+            ].map((k) => (
+              <div key={k.label} style={{ flexShrink: 0, background: "#111827", border: "1px solid " + k.color + "44", borderRadius: 8, padding: "4px 10px", textAlign: "center", minWidth: 64 }}>
+                <div style={{ fontSize: 13, fontWeight: 700, color: k.color }}>{k.value}</div>
+                <div style={{ fontSize: 9, color: "#475569" }}>{k.label}</div>
+              </div>
+            ))}
+          </div>
         </div>
-      </div>
 
-      {/* Row 4 — Tabs (sticky start) */}
-      <div style={{ position: "sticky", top: 0, zIndex: 40, background: "#0d1117", paddingTop: 4 }}>
+        <div style={{ paddingTop: 4 }}>
         <div className="tab-bar" style={{ marginBottom: 0 }}>
           <button className={"tab-btn" + (tab === "list" ? " active" : "")} onClick={() => setTab("list")}>
             Procurement List
@@ -480,6 +494,7 @@ function ProcurementList({ mode, onBack, sheetData, onGoToInventory }) {
             </div>
           </div>
         )}
+        </div>
       </div>
       {/* ── PROCUREMENT LIST CONTENT ── */}
       {tab === "list" && (
@@ -838,18 +853,8 @@ function ProcurementList({ mode, onBack, sheetData, onGoToInventory }) {
       {/* Saved Lists fixed bottom */}
       {tab === "saved" && (
         <div
+          className="fixed-bottom-bar compact-bottom-bar procurement-bottom-bar"
           style={{
-            position: "fixed",
-            bottom: 0,
-            left: 0,
-            right: 0,
-            background: "#0f1520",
-            borderTop: "1px solid rgba(0,180,216,0.4)",
-            boxShadow: "0 -4px 12px rgba(0,0,0,0.4)",
-            padding: "10px 12px",
-            zIndex: 100,
-            maxWidth: 480,
-            margin: "0 auto",
           }}
         >
           <div style={{ display: "flex", gap: 8 }}>
@@ -892,140 +897,160 @@ function ProcurementList({ mode, onBack, sheetData, onGoToInventory }) {
               display: "flex",
               flexDirection: "column",
               border: "1px solid rgba(0,180,216,0.3)",
+              position: "relative",
+              overflow: "hidden",
             }}
           >
-            {/* Sticky top card */}
+            {/* Header — second image: Left (shop, owner) | Center (ID, date, items, supplier) | Right (Close, Mark as Ordered, Delete) */}
             <div
               style={{
                 background: "linear-gradient(135deg, #0f1923, #1a2535)",
                 borderBottom: "1px solid rgba(0,180,216,0.2)",
-                padding: "12px 16px",
+                padding: "12px 14px",
                 flexShrink: 0,
               }}
             >
-              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
-                {/* Left — shop + order info */}
-                <div>
-                  <div style={{ fontSize: 13, fontWeight: 700, color: "#f1f5f9" }}>{sheetData?.shopName || "My Shop"}</div>
-                  <div style={{ fontSize: 11, color: "#64748b" }}>{sheetData?.ownerName || ""}</div>
-                  <div style={{ fontSize: 12, fontWeight: 700, color: "#00b4d8", marginTop: 4 }}>{viewingOrder.orderNum}</div>
-                  <div style={{ fontSize: 10, color: "#475569" }}>{viewingOrder.date}</div>
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "stretch", gap: 12 }}>
+                {/* Left — Shop Name, Owner Name */}
+                <div style={{ flex: 1, minWidth: 0, display: "flex", flexDirection: "column", justifyContent: "center" }}>
+                  <div style={{ fontSize: 14, fontWeight: 700, color: "#f1f5f9" }}>{sheetData?.shopName || "My Shop"}</div>
+                  <div style={{ fontSize: 11, color: "#64748b", marginTop: 2 }}>{sheetData?.ownerName || ""}</div>
                 </div>
-                {/* Right — supplier + actions */}
-                <div style={{ textAlign: "right" }}>
-                  <div style={{ fontSize: 10, color: "#64748b" }}>Suppliers</div>
-                  <div style={{ fontSize: 11, color: "#e2e8f0", marginBottom: 8 }}>{(viewingOrder.supplierNames || ["General"]).join(", ")}</div>
-                  {/* Action buttons */}
-                  <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
+                {/* Center — exactly like reference: PO/date/items on left, suppliers on right */}
+                <div style={{ flex: 1.2, minWidth: 0, display: "flex", alignItems: "flex-start", gap: 14 }}>
+                  <div style={{ display: "flex", flexDirection: "column", gap: 2 }}>
+                    <div style={{ fontSize: 12, fontWeight: 700, color: "#00b4d8" }}>{viewingOrder.orderNum}</div>
+                    <div style={{ fontSize: 11, color: "#94a3b8" }}>{viewingOrder.date}</div>
+                    <div style={{ fontSize: 11, color: "#94a3b8" }}>{viewingOrder.items?.length || 0} Items</div>
+                  </div>
+                  <div style={{ display: "flex", flexDirection: "column", gap: 2 }}>
+                    <div style={{ fontSize: 9, color: "#64748b", textTransform: "uppercase" }}>Suppliers</div>
+                    <div style={{ fontSize: 11, fontWeight: 600, color: "#e2e8f0" }}>{(viewingOrder.supplierNames || ["General"]).join(", ")}</div>
+                  </div>
+                </div>
+                {/* Right — Close, Mark as Ordered, Delete */}
+                <div style={{ flexShrink: 0, display: "flex", flexDirection: "column", gap: 4, justifyContent: "center" }}>
+                  <button
+                    className="btn btn-outline"
+                    style={{ fontSize: 10, padding: "4px 10px", display: "inline-flex", alignItems: "center", gap: 4 }}
+                    onClick={() => {
+                      setShowViewOrder(false);
+                      setTab(viewOrderSource === "saved" ? "saved" : "list");
+                    }}
+                  >
+                    <Icon name="X" size={12} />
+                    <span>Close</span>
+                  </button>
+                  {viewingOrder.status !== "ordered" && (
                     <button
-                      className="btn btn-outline"
-                      style={{ fontSize: 10, padding: "3px 10px" }}
-                      onClick={() => {
-                        setShowViewOrder(false);
-                        setTab(viewOrderSource === "saved" ? "saved" : "list");
-                      }}
-                    >
-                      <Icon name="X" size={14} />
-                      <span>Close</span>
-                    </button>
-                    {viewingOrder.status !== "ordered" && (
-                      <button
-                        className="btn btn-outline"
-                        style={{ fontSize: 10, padding: "3px 10px" }}
-                        onClick={() => {
-                          setModal({
-                            type: "confirm",
-                            title: "Mark as Ordered",
-                            message: "Mark " + viewingOrder.orderNum + " as ordered?",
-                            confirmLabel: "Mark Ordered",
-                            onConfirm: () => {
-                              setModal(null);
-                              saveOrder({ ...viewingOrder, status: "ordered" });
-                              setViewingOrder((prev) => ({ ...prev, status: "ordered" }));
-                              showToast(viewingOrder.orderNum + " marked as ordered.");
-                            },
-                            onCancel: () => setModal(null),
-                          });
-                        }}
-                      >
-                        Mark as Ordered
-                      </button>
-                    )}
-                    {viewingOrder.status === "ordered" && <span style={{ background: "rgba(129,140,248,0.15)", color: "#c7d2fe", padding: "2px 8px", borderRadius: 999, fontSize: 10 }}>✓ Ordered</span>}
-                    <button
-                      className="btn btn-danger"
-                      style={{ fontSize: 10, padding: "3px 10px", display: "inline-flex", alignItems: "center", gap: 4, justifyContent: "center" }}
+                      className="btn btn-primary"
+                      style={{ fontSize: 10, padding: "4px 10px" }}
                       onClick={() => {
                         setModal({
                           type: "confirm",
-                          title: "Delete Order",
-                          message: "Delete " + viewingOrder.orderNum + "? Cannot be undone.",
-                          confirmLabel: "Delete",
+                          title: "Mark as Ordered",
+                          message: "Mark " + viewingOrder.orderNum + " as ordered?",
+                          confirmLabel: "Mark Ordered",
                           onConfirm: () => {
                             setModal(null);
-                            deleteSavedOrder(viewingOrder.orderNum);
-                            setShowViewOrder(false);
-                            showToast(viewingOrder.orderNum + " deleted.");
+                            saveOrder({ ...viewingOrder, status: "ordered" });
+                            setViewingOrder((prev) => ({ ...prev, status: "ordered" }));
+                            showToast(viewingOrder.orderNum + " marked as ordered.");
                           },
                           onCancel: () => setModal(null),
                         });
                       }}
                     >
-                      <Icon name="Trash2" size={14} />
-                      <span>Delete</span>
+                      Mark as Ordered
                     </button>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            {/* Scrollable product cards */}
-            <div style={{ flex: 1, overflowY: "auto", padding: "12px 16px", paddingBottom: 100 }}>
-              <div style={{ fontSize: 11, color: "#475569", marginBottom: 8 }}>{viewingOrder.items?.length || 0} products</div>
-
-              {(viewingOrder.items || []).map((item, idx) => (
-                <div key={idx} className="list-card" style={{ marginBottom: 8 }}>
-                  <div style={{ display: "flex", gap: 8 }}>
-                    <div style={{ flex: 2 }}>
-                      <div style={{ fontSize: 13, fontWeight: 700, color: "#f1f5f9" }}>{item.productName}</div>
-                      <div className="text-small">
-                        {item.brand} · {item.packingQty}
-                      </div>
-                    </div>
-                    <div style={{ flex: 1, textAlign: "right" }}>
-                      <div style={{ fontSize: 10, color: "#64748b" }}>Supplier</div>
-                      <div style={{ fontSize: 11, color: "#e2e8f0" }}>{item.supplier || "General"}</div>
-                      <div style={{ fontSize: 10, color: "#64748b", marginTop: 4 }}>Order Qty</div>
-                      <div style={{ fontSize: 14, fontWeight: 700, color: "#00b4d8" }}>{item.qty}</div>
-                    </div>
-                  </div>
-                  {/* Remove */}
-                    <button
-                      style={{ background: "none", border: "none", color: "#ef4444", fontSize: 11, cursor: "pointer", marginTop: 6, display: "block", width: "100%", textAlign: "right", display: "flex", alignItems: "center", justifyContent: "flex-end", gap: 4 }}
+                  )}
+                  {viewingOrder.status === "ordered" && <span style={{ background: "rgba(129,140,248,0.15)", color: "#c7d2fe", padding: "3px 8px", borderRadius: 999, fontSize: 9 }}>Ordered</span>}
+                  <button
+                    className="btn btn-danger"
+                    style={{ fontSize: 10, padding: "4px 10px", display: "inline-flex", alignItems: "center", gap: 4 }}
                     onClick={() => {
                       setModal({
                         type: "confirm",
-                        title: "Remove Item",
-                        message: "Remove " + item.productName + " from this order?",
-                        confirmLabel: "Remove",
+                        title: "Delete Order",
+                        message: "Delete " + viewingOrder.orderNum + "? Cannot be undone.",
+                        confirmLabel: "Delete",
                         onConfirm: () => {
                           setModal(null);
-                          removeItemFromSavedOrder(viewingOrder.orderNum, item.productName);
-                          setViewingOrder((prev) => ({ ...prev, items: prev.items.filter((i) => i.productName !== item.productName) }));
-                          showToast(item.productName + " removed from order.");
+                          deleteSavedOrder(viewingOrder.orderNum);
+                          setShowViewOrder(false);
+                          showToast(viewingOrder.orderNum + " deleted.");
                         },
                         onCancel: () => setModal(null),
                       });
                     }}
-                    >
-                    <Icon name="X" size={14} />
-                    <span>Remove</span>
-                    </button>
+                  >
+                    <Icon name="Trash2" size={12} />
+                    <span>Delete</span>
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            {/* Content — product cards */}
+            <div style={{ flex: 1, overflowY: "auto", padding: "12px 14px", paddingBottom: 100 }}>
+              {(viewingOrder.items || []).map((item, idx) => (
+                <div key={idx} className="list-card" style={{ marginBottom: 8, padding: 10 }}>
+                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "stretch", gap: 12 }}>
+                    {/* Left — Product Name, Brand, Wt/MRP, Cat/SubCat */}
+                    <div style={{ flex: 1.2, minWidth: 0 }}>
+                      <div style={{ fontSize: 9, color: "#64748b", marginBottom: 1 }}>Product Name</div>
+                      <div style={{ fontSize: 12, fontWeight: 700, color: "#f1f5f9" }}>{item.productName}</div>
+                      <div style={{ fontSize: 9, color: "#64748b", marginTop: 4, marginBottom: 1 }}>Brand</div>
+                      <div className="text-small">{item.brand || "—"}</div>
+                      <div style={{ fontSize: 9, color: "#64748b", marginTop: 4, marginBottom: 1 }}>Wt / MRP</div>
+                      <div className="text-small">{item.packingQty || "—"} {(item.mrp && item.mrp > 0) ? "· ₹" + item.mrp : ""}</div>
+                      {(item.category || item.subCategory) && (
+                        <>
+                          <div style={{ fontSize: 9, color: "#64748b", marginTop: 4, marginBottom: 1 }}>Cat / SubCat</div>
+                          <div className="text-small">{(item.category || "—") + (item.subCategory ? " / " + item.subCategory : "")}</div>
+                        </>
+                      )}
+                    </div>
+                    {/* Center — Suppliers */}
+                    <div style={{ flex: 0.8, display: "flex", flexDirection: "column", justifyContent: "center", textAlign: "center" }}>
+                      <div style={{ fontSize: 9, color: "#64748b", textTransform: "uppercase" }}>Suppliers</div>
+                      <div style={{ fontSize: 11, fontWeight: 600, color: "#e2e8f0" }}>{item.supplier || "General"}</div>
+                    </div>
+                    {/* Right — X Remove, Order Qty */}
+                    <div style={{ flexShrink: 0, display: "flex", flexDirection: "column", gap: 6, justifyContent: "center" }}>
+                      <button
+                        className="btn btn-danger"
+                        style={{ fontSize: 10, padding: "3px 8px", display: "inline-flex", alignItems: "center", gap: 4 }}
+                        onClick={() => {
+                          setModal({
+                            type: "confirm",
+                            title: "Remove Item",
+                            message: "Remove " + item.productName + " from this order?",
+                            confirmLabel: "Remove",
+                            onConfirm: () => {
+                              setModal(null);
+                              removeItemFromSavedOrder(viewingOrder.orderNum, item.productName);
+                              setViewingOrder((prev) => ({ ...prev, items: prev.items.filter((i) => i.productName !== item.productName) }));
+                              showToast(item.productName + " removed from order.");
+                            },
+                            onCancel: () => setModal(null),
+                          });
+                        }}
+                      >
+                        <Icon name="X" size={12} />
+                        <span>Remove</span>
+                      </button>
+                      <div style={{ textAlign: "center" }}>
+                        <div style={{ fontSize: 9, color: "#64748b" }}>Order Qty</div>
+                        <div style={{ fontSize: 14, fontWeight: 700, color: "#00b4d8" }}>{item.qty || 0}</div>
+                      </div>
+                    </div>
+                  </div>
                 </div>
               ))}
             </div>
 
-            {/* Bottom bar */}
+            {/* Footer — Add/Edit | Products | Save | CSV | Update Stock (prominent when ordered) */}
             <div
               style={{
                 position: "absolute",
@@ -1033,35 +1058,53 @@ function ProcurementList({ mode, onBack, sheetData, onGoToInventory }) {
                 left: 0,
                 right: 0,
                 background: "#0f1520",
-                borderTop: "1px solid rgba(0,180,216,0.4)",
-                boxShadow: "0 -4px 12px rgba(0,0,0,0.4)",
+                borderTop: "1px solid rgba(0,180,216,0.35)",
+                boxShadow: "0 -3px 10px rgba(0,0,0,0.35)",
                 padding: "10px 12px",
               }}
             >
-              <div style={{ display: "flex", gap: 8 }}>
+              <div style={{ display: "flex", alignItems: "center", gap: 6, flexWrap: "wrap" }}>
                 <button
                   className="btn btn-outline"
-                  style={{ flex: 1, fontSize: 11 }}
+                  style={{ flex: 1, minWidth: 70, fontSize: 11, display: "inline-flex", alignItems: "center", justifyContent: "center", gap: 4 }}
                   onClick={() => {
                     setShowViewOrder(false);
                     setTab("list");
                   }}
                 >
-                  <BackIcon size={16} strokeWidth={3} /> Add/Edit
+                  <BackIcon size={14} strokeWidth={2.5} />
+                  <span>Add/Edit</span>
                 </button>
-                <div style={{ textAlign: "center", flex: 1 }}>
-                  <div style={{ fontSize: 9, color: "#475569" }}>Products</div>
-                  <div style={{ fontSize: 13, fontWeight: 700, color: "#00b4d8" }}>{viewingOrder.items?.length || 0}</div>
-                </div>
-                <button className="btn btn-primary" style={{ flex: 1, fontSize: 11 }} onClick={handleSaveOrder}>
+                <button className="btn btn-primary" style={{ flex: 1, minWidth: 60, fontSize: 11 }} onClick={handleSaveOrder}>
                   Save
                 </button>
                 <button
                   className={"btn btn-outline" + (!savedOrders.find((o) => o.orderNum === viewingOrder.orderNum) ? " btn-disabled" : "")}
-                  style={{ flex: 1, fontSize: 11 }}
+                  style={{ flex: 0.8, minWidth: 50, fontSize: 11, display: "inline-flex", alignItems: "center", justifyContent: "center", gap: 4 }}
                   onClick={() => handleDownloadCSV(viewingOrder.orderNum, viewingOrder.items || [])}
                 >
-                  ↓ CSV
+                  <span>↓</span>
+                  <span>CSV</span>
+                </button>
+                <button
+                  className={"btn " + (viewingOrder.status === "ordered" ? "btn-primary" : "btn-outline btn-disabled")}
+                  style={{
+                    flex: 1.2,
+                    minWidth: 90,
+                    fontSize: 11,
+                    fontWeight: 600,
+                    ...(viewingOrder.status === "ordered" && { background: "linear-gradient(135deg, #f59e0b, #d97706)", borderColor: "#f59e0b" }),
+                  }}
+                  onClick={() => {
+                    if (viewingOrder.status !== "ordered") return;
+                    setSelectedOrderNum(viewingOrder.orderNum);
+                    setFilterMode("addedToOrder");
+                    setShowViewOrder(false);
+                    setTab("list");
+                    showToast("Switched to " + viewingOrder.orderNum + " — update received quantities.");
+                  }}
+                >
+                  Update Stock
                 </button>
               </div>
             </div>
@@ -1071,18 +1114,8 @@ function ProcurementList({ mode, onBack, sheetData, onGoToInventory }) {
       {/* ── PROCUREMENT LIST BOTTOM BAR ── */}
       {tab === "list" && !showViewOrder && (
         <div
+          className="fixed-bottom-bar compact-bottom-bar procurement-bottom-bar"
           style={{
-            position: "fixed",
-            bottom: 0,
-            left: 0,
-            right: 0,
-            background: "#0f1520",
-            borderTop: "1px solid rgba(0,180,216,0.4)",
-            boxShadow: "0 -4px 12px rgba(0,0,0,0.4)",
-            padding: "10px 12px",
-            zIndex: 100,
-            maxWidth: 480,
-            margin: "0 auto",
           }}
         >
           <div style={{ display: "flex", gap: 8, alignItems: "center" }}>

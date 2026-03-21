@@ -6,14 +6,18 @@ function Dashboard({ mode, sheetData, onNavigate, onSlotsActivated }) {
   const { orders } = useOrderData();
 
   const isExplore = mode === "explore";
-  const pendingCount = orders.filter((o) => o.status === "pending").length;
+  const now = new Date();
+  const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  const pendingCount = orders.filter((o) => o.status === "pending" && new Date(o.date) >= todayStart).length;
 
   return (
     <div>
       {/* Explore notice */}
       {isExplore && (
         <div className="explore-notice">
-          <strong>Explore Demo Mode</strong> — All data shown is sample only. Login with your code or buy slots to get started.
+          <div className="explore-notice-title">Explore</div>
+          <div className="explore-notice-subtitle">Demo Mode</div>
+          <div>All data shown is sample only. Login with your code to start live mode.</div>
         </div>
       )}
 

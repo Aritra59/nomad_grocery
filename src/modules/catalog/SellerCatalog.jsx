@@ -25,8 +25,30 @@ function SellerCatalog({ mode, onBack, sheetData }) {
   const [sortDir, setSortDir] = useState("asc");
   const [saveSuccess, setSaveSuccess] = useState(false);
   const [modal, setModal] = useState(null);
+  const [isSharing, setIsSharing] = useState(false);
 
-  const catalogLink = generateCatalogLink(sheetData?.mobile, sheetData?.shopName, sheetData?.ownerName);
+  const sharedCatalogPayload = useMemo(() => {
+    const activeItems = items
+      .filter((p) => !!draft[p.id])
+      .map((p) => ({
+        id: p.id,
+        name: p.name,
+        brand: p.brand,
+        category: p.category,
+        packingQty: p.packingQty,
+        mrp: p.mrp,
+        currStock: p.currStock || 0,
+      }));
+    return {
+      ids: activeItems.map((p) => p.id),
+      items: activeItems,
+    };
+  }, [items, draft]);
+
+  const catalogLink = useMemo(
+    () => generateCatalogLink(sheetData?.mobile, sheetData?.shopName, sheetData?.ownerName, sharedCatalogPayload, sheetData?.shopId),
+    [sheetData?.mobile, sheetData?.shopName, sheetData?.ownerName, sharedCatalogPayload, sheetData?.shopId]
+  );
 
   const { listening, start, stop } = useVoiceInput({
     onResult: (text) => setSearch(text),
@@ -80,6 +102,7 @@ function SellerCatalog({ mode, onBack, sheetData }) {
   };
 
   const handleCopyLink = async () => {
+    if (isSharing) return;
     if (!isCatalogSaved) {
       setModal({
         type: "warning",
@@ -89,16 +112,27 @@ function SellerCatalog({ mode, onBack, sheetData }) {
       });
       return;
     }
-    const ok = await copyToClipboard(catalogLink);
+    if (!sheetData?.mobile) {
+      setModal({
+        type: "warning",
+        title: "Shop Mobile Missing",
+        message: "Please complete shop profile mobile before sharing catalog.",
+        onConfirm: () => setModal(null),
+      });
+      return;
+    }
+    setIsSharing(true);
     try {
-      window.open(catalogLink, "_blank", "noopener,noreferrer");
-    } catch {}
-    setModal({
-      type: ok ? "success" : "info",
-      title: ok ? "Catalog Link Ready" : "Catalog Link",
-      message: ok ? "Catalog link copied and opened." : "Catalog opened.",
-      onConfirm: () => setModal(null),
-    });
+      const ok = await copyToClipboard(catalogLink);
+      setModal({
+        type: ok ? "success" : "info",
+        title: ok ? "Catalog Link Ready" : "Catalog Link",
+        message: ok ? "Catalog link copied." : "Could not copy automatically. Please copy manually.",
+        onConfirm: () => setModal(null),
+      });
+    } finally {
+      window.setTimeout(() => setIsSharing(false), 400);
+    }
   };
 
   const clearFilters = () => {
@@ -143,19 +177,24 @@ function SellerCatalog({ mode, onBack, sheetData }) {
           <span className="back-row" style={{ margin: 0 }} onClick={onBack}>
             <BackIcon size={18} strokeWidth={3} />
           </span>
-          <div className="page-title-pill">Customer Catalog</div>
-          <div style={{ display: "flex", gap: 6, marginLeft: "auto" }}>
-            <button
-              className={"btn " + (activeFilterCount > 0 ? "btn-primary" : "btn-outline")}
-              style={{ fontSize: 10, padding: "4px 10px", position: "relative" }}
-              onClick={() => setShowFilters(true)}
-            >
-              Filter {activeFilterCount > 0 ? "(" + activeFilterCount + ")" : ""}
-            </button>
-            <button className="btn btn-outline" style={{ fontSize: 10, padding: "3px 10px" }} onClick={handleSelectAll}>
-              {allFilteredSelected ? "Deselect All" : "Select All"}
-            </button>
+          <div className="page-title-pill" style={{ margin: "0 auto" }}>
+            Customer Catalog
           </div>
+        </div>
+        <div style={{ display: "flex", gap: 6, marginTop: 8 }}>
+          <button
+            className={"btn " + (activeFilterCount > 0 ? "btn-primary" : "btn-outline")}
+            style={{ flex: 1, fontSize: 11 }}
+            onClick={() => setShowFilters(true)}
+          >
+            Filter {activeFilterCount > 0 ? "(" + activeFilterCount + ")" : ""}
+          </button>
+          <button className="btn btn-outline" style={{ flex: 1, fontSize: 11 }} onClick={() => setShowSort(true)}>
+            Sort
+          </button>
+          <button className="btn btn-outline" style={{ flex: 1, fontSize: 11 }} onClick={handleSelectAll}>
+            {allFilteredSelected ? "Deselect All" : "Select All"}
+          </button>
         </div>
       </div>
 
@@ -187,7 +226,7 @@ function SellerCatalog({ mode, onBack, sheetData }) {
       )}
 
       {/* Search row + view toggle pill */}
-      <div className="search-row">
+      <div className="search-row" style={{ marginBottom: 8 }}>
         <input className="input" style={{ flex: 1 }} placeholder="Name, brand, category…" value={search} onChange={(e) => setSearch(e.target.value)} />
         <button className={"mic-btn" + (listening ? " listening" : "")} onClick={listening ? stop : start}>
           <Icon name="Mic" size={16} />
@@ -220,8 +259,8 @@ function SellerCatalog({ mode, onBack, sheetData }) {
         <div style={{ fontSize: 11, color: "#475569" }}>
           {filtered.length} shown · {selectedIds.length} selected
         </div>
-        <button className="btn btn-outline" style={{ fontSize: 10, padding: "3px 10px" }} onClick={handleSelectAll}>
-          {allFilteredSelected ? "Deselect All" : "Select All"}
+        <button className="btn btn-outline" style={{ fontSize: 10, padding: "3px 10px" }} onClick={() => setShowSort(true)}>
+          Sort
         </button>
       </div>
 
@@ -274,17 +313,9 @@ function SellerCatalog({ mode, onBack, sheetData }) {
       </div>
       {/* Bottom bar */}
       <div
+        className="fixed-bottom-bar compact-bottom-bar"
         style={{
-          position: "fixed",
-          bottom: 0,
-          left: 0,
-          right: 0,
           background: "#0a0f18",
-          borderTop: "1px solid rgba(0,180,216,0.15)",
-          padding: "10px 12px",
-          zIndex: 100,
-          maxWidth: 480,
-          margin: "0 auto",
         }}
       >
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 6 }}>
@@ -297,15 +328,16 @@ function SellerCatalog({ mode, onBack, sheetData }) {
         <div style={{ display: "flex", gap: 8 }}>
           <button
             className={"btn btn-outline" + (!isCatalogSaved ? " btn-disabled" : "")}
-            style={{ flex: 2, fontSize: 10, overflow: "hidden", display: "inline-flex", alignItems: "center", gap: 6, justifyContent: "center" }}
+            style={{ flex: 1.3, fontSize: 11, overflow: "hidden", display: "inline-flex", alignItems: "center", gap: 6, justifyContent: "center", minHeight: 36 }}
             onClick={isCatalogSaved ? handleCopyLink : undefined}
+            disabled={isSharing}
           >
             <Icon name="Link2" size={14} />
-            <span>Share Catalog</span>
+            <span>{isSharing ? "Sharing..." : "Share"}</span>
           </button>
           <button
             className={"btn btn-primary" + (selectedIds.length === 0 ? " btn-disabled" : "")}
-            style={{ flex: 1, fontSize: 11, flexShrink: 0 }}
+            style={{ flex: 1, fontSize: 11, flexShrink: 0, minHeight: 36 }}
             onClick={selectedIds.length === 0 ? undefined : () => setPreviewMode(true)}
           >
             View ({selectedIds.length})

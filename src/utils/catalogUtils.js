@@ -1,12 +1,46 @@
 // ── Generate Catalog Link — includes shop + owner in URL ──
-export const generateCatalogLink = (mobile, shopName, ownerName) => {
+const encodeSharePayload = (payload) => {
+  try {
+    const bytes = new TextEncoder().encode(JSON.stringify(payload));
+    let binary = "";
+    bytes.forEach((b) => {
+      binary += String.fromCharCode(b);
+    });
+    return btoa(binary);
+  } catch {
+    return "";
+  }
+};
+
+const decodeSharePayload = (encoded) => {
+  if (!encoded) return null;
+  try {
+    const binary = atob(encoded);
+    const bytes = new Uint8Array(binary.length);
+    for (let i = 0; i < binary.length; i++) {
+      bytes[i] = binary.charCodeAt(i);
+    }
+    const json = new TextDecoder().decode(bytes);
+    const parsed = JSON.parse(json);
+    return parsed && typeof parsed === "object" ? parsed : null;
+  } catch {
+    return null;
+  }
+};
+
+export const generateCatalogLink = (mobile, shopName, ownerName, payload, shopId) => {
   const base = window.location.origin;
   const params = new URLSearchParams();
   // Wrapper param so the receiver lands in the correct UI state
   params.set("share", "catalog");
-  params.set("catalog", mobile || "demo");
+  if (mobile) params.set("catalog", mobile);
   if (shopName) params.set("shop", shopName);
   if (ownerName) params.set("owner", ownerName);
+  if (shopId) params.set("shopId", shopId);
+  if (payload) {
+    const encoded = encodeSharePayload(payload);
+    if (encoded) params.set("payload", encoded);
+  }
   return `${base}?${params.toString()}`;
 };
 
@@ -17,14 +51,35 @@ export const getShopDataFromUrl = () => {
     mobile: params.get("catalog") || "",
     shopName: params.get("shop") || "Shop",
     ownerName: params.get("owner") || "",
+    shopId: params.get("shopId") || "",
+    payload: decodeSharePayload(params.get("payload") || ""),
   };
 };
 
 // ── Generate Customer History Link ──
 export const generateHistoryLink = (customerId) => {
   const base = window.location.origin;
-  // Wrapper param so the receiver lands in the correct UI state
   return `${base}?share=customer&customerId=${customerId}`;
+};
+
+export const generateCustomerHistoryLink = (customerId, payload) => {
+  const base = window.location.origin;
+  const params = new URLSearchParams();
+  params.set("share", "customer");
+  if (customerId !== undefined && customerId !== null) params.set("customerId", String(customerId));
+  if (payload) {
+    const encoded = encodeSharePayload(payload);
+    if (encoded) params.set("payload", encoded);
+  }
+  return `${base}?${params.toString()}`;
+};
+
+export const getCustomerHistoryFromUrl = () => {
+  const params = new URLSearchParams(window.location.search);
+  return {
+    customerId: params.get("customerId") || "",
+    payload: decodeSharePayload(params.get("payload") || ""),
+  };
 };
 
 // ── Copy to clipboard ──

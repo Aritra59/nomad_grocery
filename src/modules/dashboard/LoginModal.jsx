@@ -25,14 +25,10 @@ function LoginModal({ onClose, onLogin }) {
       const msg = err?.message || "";
       if (msg.includes("Could not reach") || msg.includes("NetworkError") || msg.includes("Failed to fetch")) {
         setModal({
-          type: "warning",
-          title: "Login Delay",
-          message: "Login Delay. Please try after sometime.",
-          onConfirm: () => {
-            setModal(null);
-            onLogin(code.trim(), null);
-          },
-          confirmLabel: "Continue",
+          type: "error",
+          title: "Login Failed",
+          message: "Could not reach live data. Please try again.",
+          onConfirm: () => setModal(null),
         });
       } else {
         setModal({

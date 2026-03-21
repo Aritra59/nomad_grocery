@@ -2,7 +2,7 @@ import React, { useState, useMemo } from "react";
 import { useCustomersData } from "../../hooks/useCustomersData";
 import { useOrderData } from "../../hooks/useOrderData";
 import { ORDER_STATUS_COLORS, PAYMENT_STATUS_COLORS, sortOrders, filterByDateRange } from "../../utils/ordersUtils";
-import { generateHistoryLink, copyToClipboard } from "../../utils/catalogUtils";
+import { generateCustomerHistoryLink, copyToClipboard } from "../../utils/catalogUtils";
 import AppModal from "../../components/common/AppModal";
 import BackIcon from "../../components/common/BackIcon";
 import Icon from "../../components/common/Icon";
@@ -113,16 +113,59 @@ function CustomerDetail({ mode, onBack, customerId, onViewOrder }) {
 
   if (!customer)
     return (
-      <div>
-        <span className="back-arrow-gradient" onClick={onBack}>
-          <BackIcon size={20} strokeWidth={3} />
-        </span>
-        <div className="text-muted">Customer not found.</div>
+      <div className="list-card">
+        <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+          <button
+            onClick={onBack}
+            style={{
+              flexShrink: 0,
+              padding: 4,
+              margin: -4,
+              background: "none",
+              border: "none",
+              cursor: "pointer",
+              lineHeight: 0,
+            }}
+            aria-label="Back to list"
+          >
+            <span className="back-arrow-gradient" style={{ display: "inline-flex" }}>
+              <BackIcon size={20} strokeWidth={2.5} />
+            </span>
+          </button>
+          <div className="text-muted">Customer not found.</div>
+        </div>
       </div>
     );
 
   const totalAmountFiltered = customerOrders.reduce((sum, o) => sum + (o.total || 0), 0);
-  const shareLink = generateHistoryLink(customer.id);
+  const historyOrders = useMemo(() => orders.filter((o) => o.mobile === customer.mobile), [orders, customer.mobile]);
+  const sharePayload = useMemo(
+    () => ({
+      customer: {
+        id: customer.id,
+        name: customer.name,
+        mobile: customer.mobile,
+        address: customer.address || "",
+        joinDate: customer.joinDate || "",
+      },
+      orders: historyOrders.map((o) => ({
+        id: o.id,
+        orderNumber: o.orderNumber,
+        date: o.date,
+        total: o.total || 0,
+        paymentStatus: o.paymentStatus || "unpaid",
+        items: Array.isArray(o.items)
+          ? o.items.map((i) => ({
+              name: i.name,
+              qty: i.qty,
+            }))
+          : [],
+      })),
+      generatedAt: new Date().toISOString(),
+    }),
+    [customer, historyOrders]
+  );
+  const shareLink = useMemo(() => generateCustomerHistoryLink(customer.id, sharePayload), [customer.id, sharePayload]);
 
   const handleSaveEdit = () => {
     updateCustomer({ ...customer, name: name.trim(), mobile: editMobile.trim(), address: address.trim() });
@@ -153,13 +196,10 @@ function CustomerDetail({ mode, onBack, customerId, onViewOrder }) {
 
   const handleCopyLink = async () => {
     const ok = await copyToClipboard(shareLink);
-    try {
-      window.open(shareLink, "_blank", "noopener,noreferrer");
-    } catch {}
     setModal({
       type: ok ? "success" : "info",
       title: ok ? "History Link Ready" : "History Link",
-      message: ok ? "Customer history link copied and opened." : "Customer history opened.",
+      message: ok ? "Customer history link copied." : "Could not copy automatically. Please copy manually.",
       onConfirm: () => setModal(null),
     });
   };
@@ -195,50 +235,64 @@ function CustomerDetail({ mode, onBack, customerId, onViewOrder }) {
       {modal && <AppModal type={modal.type} title={modal.title} message={modal.message} onConfirm={modal.onConfirm} onCancel={modal.onCancel} confirmLabel={modal.confirmLabel || "OK"} />}
       {showCreditModal && <CreditModal customer={customer} onClose={() => setShowCreditModal(false)} onSave={handleCreditSave} />}
 
-      {/* Header */}
-      <div className="page-header-row">
-        <span className="back-arrow-gradient" onClick={onBack}>
-          <BackIcon size={20} strokeWidth={3} />
-        </span>
-        <div style={{ fontSize: 14, fontWeight: 700, color: "#f1f5f9", flex: 1 }}>{customer.name}</div>
-      </div>
-
-      {/* Customer card */}
+      {/* Customer card — back icon integrated, no separate row */}
       <div className="list-card" style={{ marginBottom: 10 }}>
-        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
-          <div>
+        {/* Top row: back | name + edit | orders/credit */}
+        <div style={{ display: "flex", alignItems: "flex-start", gap: 10, marginBottom: editing ? 10 : 2 }}>
+          <button
+            onClick={onBack}
+            style={{
+              flexShrink: 0,
+              padding: 4,
+              margin: -4,
+              background: "none",
+              border: "none",
+              cursor: "pointer",
+              lineHeight: 0,
+            }}
+            aria-label="Back to list"
+          >
+            <span className="back-arrow-gradient" style={{ display: "inline-flex" }}>
+              <BackIcon size={20} strokeWidth={2.5} />
+            </span>
+          </button>
+          <div style={{ flex: 1, minWidth: 0 }}>
             <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
-              <div style={{ fontSize: 13, fontWeight: 700, color: "#f1f5f9" }}>{customer.name}</div>
+              <div style={{ fontSize: 15, fontWeight: 700, color: "#f1f5f9" }}>{customer.name}</div>
               <button
                 className="btn btn-outline"
-                style={{ fontSize: 10, padding: "3px 8px", display: "inline-flex", alignItems: "center", gap: 6 }}
+                style={{ padding: "4px 8px", display: "inline-flex", alignItems: "center", justifyContent: "center" }}
                 onClick={() => setEditing(!editing)}
                 title={editing ? "Cancel" : "Edit"}
               >
-                <Icon name={editing ? "X" : "Pencil"} size={16} />
+                <Icon name={editing ? "X" : "Pencil"} size={14} />
               </button>
             </div>
-            <div className="text-small" style={{ display: "flex", alignItems: "center", gap: 4 }}>
-              <Icon name="Phone" size={12} />
-              <span>{customer.mobile}</span>
-            </div>
-            {customer.address && (
+            <div style={{ display: "flex", flexWrap: "wrap", gap: "10px 16px", marginTop: 6 }}>
               <div className="text-small" style={{ display: "flex", alignItems: "center", gap: 4 }}>
-                <Icon name="MapPin" size={12} />
-                <span>{customer.address}</span>
+                <Icon name="Phone" size={12} />
+                <span>{customer.mobile}</span>
               </div>
-            )}
-            {customerAge && <div className="text-small">Since {customerAge}</div>}
+              {customer.address && (
+                <div className="text-small" style={{ display: "flex", alignItems: "center", gap: 4 }}>
+                  <Icon name="MapPin" size={12} />
+                  <span>{customer.address}</span>
+                </div>
+              )}
+              {customerAge && <div className="text-small">Since {customerAge}</div>}
+            </div>
           </div>
-          <div style={{ textAlign: "right", display: "flex", flexDirection: "column", alignItems: "flex-end", gap: 6 }}>
+          <div style={{ flexShrink: 0, textAlign: "right" }}>
             <div style={{ fontSize: 11, color: "#475569" }}>
               Orders: <span style={{ color: "#e2e8f0", fontWeight: 600 }}>{customer.totalOrders || 0}</span>
             </div>
-            {(customer.totalCredit || 0) > 0 && <div style={{ fontSize: 12, color: "#ef4444", fontWeight: 600 }}>Credit ₹{customer.totalCredit}</div>}
             {(customer.totalCredit || 0) > 0 && (
-              <button className="btn btn-outline" style={{ fontSize: 10, padding: "3px 10px", marginTop: 6 }} onClick={() => setShowCreditModal(true)}>
-                Update
-              </button>
+              <>
+                <div style={{ fontSize: 12, color: "#ef4444", fontWeight: 600, marginTop: 2 }}>Credit ₹{customer.totalCredit}</div>
+                <button className="btn btn-outline" style={{ fontSize: 10, padding: "3px 8px", marginTop: 4 }} onClick={() => setShowCreditModal(true)}>
+                  Update
+                </button>
+              </>
             )}
           </div>
         </div>
@@ -263,7 +317,9 @@ function CustomerDetail({ mode, onBack, customerId, onViewOrder }) {
       </div>
 
       {/* Order History */}
-      <SH t="Order History" />
+      <div style={{ marginBottom: 10 }}>
+        <SH t="Order History" />
+      </div>
 
       {/* Sort pills */}
       <div style={{ display: "flex", gap: 6, marginBottom: 10 }}>
@@ -372,18 +428,8 @@ function CustomerDetail({ mode, onBack, customerId, onViewOrder }) {
       </div>
       {/* Fixed bottom bar */}
       <div
+        className="fixed-bottom-bar compact-bottom-bar"
         style={{
-          position: "fixed",
-          bottom: 0,
-          left: 0,
-          right: 0,
-          background: "#0f1520",
-          borderTop: "1px solid rgba(0,180,216,0.4)",
-          boxShadow: "0 -4px 12px rgba(0,0,0,0.4)",
-          padding: "10px 12px",
-          zIndex: 100,
-          maxWidth: 480,
-          margin: "0 auto",
         }}
       >
         <div style={{ display: "flex", gap: 8, alignItems: "center", marginBottom: 6 }}>

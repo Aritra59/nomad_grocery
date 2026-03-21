@@ -7,6 +7,12 @@ const STORAGE_KEY = "nomad_inventory_v1";
 
 const SAMPLE_ITEMS = MOCK_INVENTORY;
 const cloneSample = (arr) => (Array.isArray(arr) ? arr.map((i) => ({ ...i })) : arr);
+const SAMPLE_INVENTORY_SIGNATURE = MOCK_INVENTORY.map((i) => `${i.id}|${i.name}`).join("||");
+const looksLikeDemoInventory = (arr) => {
+  if (!Array.isArray(arr) || arr.length !== MOCK_INVENTORY.length) return false;
+  const signature = arr.map((i) => `${i?.id}|${i?.name}`).join("||");
+  return signature === SAMPLE_INVENTORY_SIGNATURE;
+};
 
 export const InventoryContext = createContext(null);
 
@@ -14,9 +20,25 @@ export function InventoryProvider({ children }) {
   const { mode, shopId, isDemoMode } = useAppMode();
   const [items, setItems] = useState(() => {
     const stored = readJson(STORAGE_KEY, mode, shopId);
-    if (stored !== null) return stored;
+    if (Array.isArray(stored)) {
+      if (!isDemoMode && looksLikeDemoInventory(stored)) return [];
+      return stored;
+    }
     return isDemoMode ? cloneSample(SAMPLE_ITEMS) : [];
   });
+
+  useEffect(() => {
+    const stored = readJson(STORAGE_KEY, mode, shopId);
+    if (Array.isArray(stored)) {
+      if (!isDemoMode && looksLikeDemoInventory(stored)) {
+        setItems([]);
+        return;
+      }
+      setItems(stored);
+      return;
+    }
+    setItems(isDemoMode ? cloneSample(SAMPLE_ITEMS) : []);
+  }, [mode, shopId, isDemoMode]);
 
   useEffect(() => {
     // Always persist into the scoped key; demo keys are cleared on reset.

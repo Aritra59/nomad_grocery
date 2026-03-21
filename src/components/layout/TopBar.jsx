@@ -29,7 +29,14 @@ function TopBar({ mode, headerTitle, sheetData, onLogin, onLogout }) {
 
         {/* Centre — Page title only */}
         <div className="top-bar-center">
-          <div className="top-bar-title">{headerTitle}</div>
+          {mode === "explore" ? (
+            <>
+              <div className="top-bar-title top-bar-title-explore">Explore</div>
+              <div className="top-bar-subtitle">Demo Mode</div>
+            </>
+          ) : (
+            <div className="top-bar-title">{headerTitle}</div>
+          )}
         </div>
 
         {/* Right — Live: shop info + profile + logout / Explore: Login */}

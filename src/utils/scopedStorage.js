@@ -48,6 +48,10 @@ export function readJson(baseKey, mode, shopId) {
   }
 
   // 2) One-time migrate legacy unscoped key => scoped key
+  // IMPORTANT: Never migrate legacy data into live scope, because legacy keys may
+  // contain demo payloads from older builds. This prevents demo->live leakage.
+  if (mode === "live") return null;
+
   const legacyRaw = localStorage.getItem(baseKey);
   if (legacyRaw) {
     try {

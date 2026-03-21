@@ -148,22 +148,22 @@ function OrdersList({ mode, onBack, onAddOrder, onViewOrder, onViewCustomer }) {
     }
   };
 
-  // KPI pill component
+  // KPI pill component — compact to fit within viewport
   const KpiPill = ({ label, count, amt, countColor }) => (
     <div
       style={{
-        flexShrink: 0,
+        flex: 1,
+        minWidth: 0,
         background: "#111827",
         border: "1px solid rgba(0,180,216,0.2)",
         borderRadius: 8,
-        padding: "5px 10px",
+        padding: "4px 6px",
         textAlign: "center",
-        minWidth: 70,
       }}
     >
-      <div style={{ fontSize: 9, color: "#475569", textTransform: "uppercase", letterSpacing: "0.05em" }}>{label}</div>
-      <div style={{ fontSize: 13, fontWeight: 700, color: countColor || "#00b4d8" }}>{count}</div>
-      {amt !== undefined && <div style={{ fontSize: 10, color: "#334155" }}>₹{amt}</div>}
+      <div style={{ fontSize: 8, color: "#475569", textTransform: "uppercase", letterSpacing: "0.03em" }}>{label}</div>
+      <div style={{ fontSize: 11, fontWeight: 700, color: countColor || "#00b4d8" }}>{count}</div>
+      {amt !== undefined && <div style={{ fontSize: 9, color: "#334155" }}>₹{amt}</div>}
     </div>
   );
   // Order card
@@ -245,55 +245,56 @@ function OrdersList({ mode, onBack, onAddOrder, onViewOrder, onViewCustomer }) {
     <div style={{ paddingBottom: 70 }}>
       {modal && <AppModal type={modal.type} title={modal.title} message={modal.message} onConfirm={modal.onConfirm} confirmLabel="OK" />}
 
-      {/* Tabs */}
-      <div className="tab-bar">
-        <button className={"tab-btn" + (tab === "live" ? " active" : "")} onClick={() => setTab("live")}>
-          Today (Live)
-        </button>
-        <button className={"tab-btn" + (tab === "history" ? " active" : "")} onClick={() => setTab("history")}>
-          History
-        </button>
-      </div>
+      {/* Sticky: tabs + header + KPIs + search + filters — only order list scrolls */}
+      <div className="sticky-header" style={{ marginBottom: 8 }}>
+        <div className="tab-bar" style={{ marginBottom: 8 }}>
+          <button className={"tab-btn" + (tab === "live" ? " active" : "")} onClick={() => setTab("live")}>
+            Today (Live)
+          </button>
+          <button className={"tab-btn" + (tab === "history" ? " active" : "")} onClick={() => setTab("history")}>
+            History
+          </button>
+        </div>
 
-      {/* ── LIVE TAB ── */}
-      {tab === "live" && (
-        <div>
-          {/* Header row */}
-          <div className="page-header-row">
-            <span className="back-arrow-gradient" onClick={onBack}>
-              <BackIcon size={20} strokeWidth={3} />
-            </span>
-            <div className="page-title-pill" style={{ padding: "5px 14px" }}>
-              Today · {todayStr}
+        {/* ── LIVE TAB content in sticky ── */}
+        {tab === "live" && (
+          <>
+            {/* Single row: back + date + KPI pills — all fit within width */}
+            <div style={{ display: "flex", alignItems: "stretch", gap: 6, marginBottom: 8 }}>
+              <span className="back-arrow-gradient" style={{ flexShrink: 0, cursor: "pointer", display: "flex", alignItems: "center" }} onClick={onBack}>
+                <BackIcon size={18} strokeWidth={3} />
+              </span>
+              <div style={{ flexShrink: 0, background: "#111827", border: "1px solid rgba(0,180,216,0.25)", borderRadius: 8, padding: "4px 8px", textAlign: "center", display: "flex", flexDirection: "column", justifyContent: "center" }}>
+                <div style={{ fontSize: 10, fontWeight: 700, color: "#00b4d8" }}>Today</div>
+                <div style={{ fontSize: 8, color: "#64748b" }}>{todayStr}</div>
+              </div>
+              <div style={{ display: "flex", flex: 1, minWidth: 0, gap: 6 }}>
+                <KpiPill label="Orders" count={todayTotals.orders} amt={todayTotals.ordersAmt} />
+                <KpiPill label="Cancelled" count={todayTotals.cancelled} amt={todayTotals.cancelledAmt} countColor="#ef4444" />
+                <KpiPill label="Pending" count={todayTotals.pending} amt={todayTotals.pendingAmt} countColor="#f59e0b" />
+                <KpiPill label="Completed" count={todayTotals.completed} amt={todayTotals.completedAmt} countColor="#06d6a0" />
+                <div
+                  style={{
+                    flex: 1,
+                    minWidth: 0,
+                    background: "#111827",
+                    border: "1px solid rgba(0,180,216,0.2)",
+                    borderRadius: 8,
+                    padding: "4px 6px",
+                    textAlign: "center",
+                    display: "flex",
+                    flexDirection: "column",
+                    justifyContent: "center",
+                  }}
+                >
+                  <div style={{ fontSize: 8, color: "#475569", textTransform: "uppercase", letterSpacing: "0.03em" }}>Paid/Credit</div>
+                  <div style={{ fontSize: 9, fontWeight: 700, color: "#06d6a0" }}>₹{todayTotals.paid}</div>
+                  <div style={{ fontSize: 9, fontWeight: 700, color: "#f59e0b" }}>₹{todayTotals.credit}</div>
+                </div>
+              </div>
             </div>
-          </div>
 
-          {/* KPI pills — scrollable */}
-          <div style={{ display: "flex", gap: 6, overflowX: "auto", marginBottom: 10, paddingBottom: 2, scrollbarWidth: "none" }}>
-            <KpiPill label="Orders" count={todayTotals.orders} amt={todayTotals.ordersAmt} />
-            <KpiPill label="Cancelled" count={todayTotals.cancelled} amt={todayTotals.cancelledAmt} countColor="#ef4444" />
-            <KpiPill label="Pending" count={todayTotals.pending} amt={todayTotals.pendingAmt} countColor="#f59e0b" />
-            <KpiPill label="Completed" count={todayTotals.completed} amt={todayTotals.completedAmt} countColor="#06d6a0" />
-            <div
-              style={{
-                flexShrink: 0,
-                background: "#111827",
-                border: "1px solid rgba(0,180,216,0.2)",
-                borderRadius: 8,
-                padding: "5px 10px",
-                textAlign: "center",
-                minWidth: 80,
-              }}
-            >
-              <div style={{ fontSize: 9, color: "#475569", textTransform: "uppercase" }}>Paid/Credit</div>
-              <div style={{ fontSize: 11, fontWeight: 700, color: "#06d6a0" }}>₹{todayTotals.paid}</div>
-              <div style={{ fontSize: 11, fontWeight: 700, color: "#f59e0b" }}>₹{todayTotals.credit}</div>
-            </div>
-          </div>
-
-          {/* Sticky search + sort */}
-          <div style={{ position: "sticky", top: 0, zIndex: 40, background: "#0d1117", paddingBottom: 8, borderBottom: "1px solid rgba(0,180,216,0.1)" }}>
-            <div className="search-row" style={{ marginBottom: 6 }}>
+            <div className="search-row" style={{ marginBottom: 8 }}>
               <input className="input" style={{ flex: 1 }} placeholder="Name or mobile…" value={liveSearch} onChange={(e) => setLiveSearch(e.target.value)} />
               <button className={"mic-btn" + (liveListening ? " listening" : "")} onClick={liveListening ? liveStop : liveStart}>
                 <Icon name="Mic" size={16} />
@@ -313,70 +314,53 @@ function OrdersList({ mode, onBack, onAddOrder, onViewOrder, onViewCustomer }) {
                 </button>
               ))}
             </div>
-          </div>
+          </>
+        )}
 
-          <div style={{ fontSize: 11, color: "#475569", margin: "8px 0" }}>
-            {liveOrders.length} pending order{liveOrders.length !== 1 ? "s" : ""}
-          </div>
-
-          <div className="list">
-            {liveOrders.map((o) => (
-              <OrderCard key={o.id} o={o} />
-            ))}
-            {liveOrders.length === 0 && (
-              <div className="text-muted" style={{ marginTop: 12 }}>
-                No pending orders today.
+        {/* ── HISTORY TAB content in sticky ── */}
+        {tab === "history" && (
+          <>
+            {/* Single row: back + date + KPI pills — all fit within width */}
+            <div style={{ display: "flex", alignItems: "stretch", gap: 6, marginBottom: 8 }}>
+              <span className="back-arrow-gradient" style={{ flexShrink: 0, cursor: "pointer", display: "flex", alignItems: "center" }} onClick={onBack}>
+                <BackIcon size={18} strokeWidth={3} />
+              </span>
+              <div style={{ flexShrink: 0, background: "#111827", border: "1px solid rgba(0,180,216,0.25)", borderRadius: 8, padding: "4px 8px", textAlign: "center", display: "flex", flexDirection: "column", justifyContent: "center" }}>
+                <div style={{ fontSize: 10, fontWeight: 700, color: "#00b4d8" }}>{monthName}</div>
+                <div style={{ fontSize: 8, color: "#64748b" }}>{day1}–{dayNow}</div>
               </div>
-            )}
-          </div>
-        </div>
-      )}
-      {/* ── HISTORY TAB ── */}
-      {tab === "history" && (
-        <div>
-          {/* Header row */}
-          <div className="page-header-row">
-            <span className="back-arrow-gradient" onClick={onBack}>
-              <BackIcon size={20} strokeWidth={3} />
-            </span>
-            <div className="page-title-pill" style={{ padding: "5px 14px" }}>
-              {monthName} · {day1}–{dayNow}
+              <div style={{ display: "flex", flex: 1, minWidth: 0, gap: 6 }}>
+                <KpiPill label="Orders" count={histTotals.orders} amt={histTotals.ordersAmt} />
+                <KpiPill label="Cancelled" count={histTotals.cancelled} amt={histTotals.cancelledAmt} countColor="#ef4444" />
+                <KpiPill label="Completed" count={histTotals.completed} amt={histTotals.completedAmt} countColor="#06d6a0" />
+                <div
+                  style={{
+                    flex: 1,
+                    minWidth: 0,
+                    background: "#111827",
+                    border: "1px solid rgba(0,180,216,0.2)",
+                    borderRadius: 8,
+                    padding: "4px 6px",
+                    textAlign: "center",
+                    display: "flex",
+                    flexDirection: "column",
+                    justifyContent: "center",
+                  }}
+                >
+                  <div style={{ fontSize: 8, color: "#475569", textTransform: "uppercase", letterSpacing: "0.03em" }}>Paid/Credit</div>
+                  <div style={{ fontSize: 9, fontWeight: 700, color: "#06d6a0" }}>₹{histTotals.paid}</div>
+                  <div style={{ fontSize: 9, fontWeight: 700, color: "#f59e0b" }}>₹{histTotals.credit}</div>
+                </div>
+              </div>
             </div>
-          </div>
 
-          {/* KPI pills — scrollable */}
-          <div style={{ display: "flex", gap: 6, overflowX: "auto", marginBottom: 10, paddingBottom: 2, scrollbarWidth: "none" }}>
-            <KpiPill label="Orders" count={histTotals.orders} amt={histTotals.ordersAmt} />
-            <KpiPill label="Cancelled" count={histTotals.cancelled} amt={histTotals.cancelledAmt} countColor="#ef4444" />
-            <KpiPill label="Completed" count={histTotals.completed} amt={histTotals.completedAmt} countColor="#06d6a0" />
-            <div
-              style={{
-                flexShrink: 0,
-                background: "#111827",
-                border: "1px solid rgba(0,180,216,0.2)",
-                borderRadius: 8,
-                padding: "5px 10px",
-                textAlign: "center",
-                minWidth: 80,
-              }}
-            >
-              <div style={{ fontSize: 9, color: "#475569", textTransform: "uppercase" }}>Paid/Credit</div>
-              <div style={{ fontSize: 11, fontWeight: 700, color: "#06d6a0" }}>₹{histTotals.paid}</div>
-              <div style={{ fontSize: 11, fontWeight: 700, color: "#f59e0b" }}>₹{histTotals.credit}</div>
-            </div>
-          </div>
-
-          {/* Sticky search + sort + filters */}
-          <div style={{ position: "sticky", top: 0, zIndex: 40, background: "#0d1117", paddingBottom: 8, borderBottom: "1px solid rgba(0,180,216,0.1)" }}>
-            {/* Search row */}
-            <div className="search-row" style={{ marginBottom: 6 }}>
+            <div className="search-row" style={{ marginBottom: 8 }}>
               <input className="input" style={{ flex: 1 }} placeholder="Name or mobile…" value={histSearch} onChange={(e) => setHistSearch(e.target.value)} />
               <button className={"mic-btn" + (histListening ? " listening" : "")} onClick={histListening ? histStop : histStart}>
                 <Icon name="Mic" size={16} />
               </button>
             </div>
 
-            {/* Sort pills */}
             <div style={{ display: "flex", gap: 6, marginBottom: 8 }}>
               {[
                 ["recent", "Recent"],
@@ -389,7 +373,6 @@ function OrdersList({ mode, onBack, onAddOrder, onViewOrder, onViewCustomer }) {
               ))}
             </div>
 
-            {/* 3 filter dropdowns */}
             <div className="filter-row">
               <div className="filter-col">
                 <div className="filter-label">Period</div>
@@ -428,7 +411,6 @@ function OrdersList({ mode, onBack, onAddOrder, onViewOrder, onViewCustomer }) {
               </div>
             </div>
 
-            {/* Custom date range */}
             {showCustom && (
               <div style={{ display: "flex", gap: 8 }}>
                 <div style={{ flex: 1 }}>
@@ -441,8 +423,32 @@ function OrdersList({ mode, onBack, onAddOrder, onViewOrder, onViewCustomer }) {
                 </div>
               </div>
             )}
+          </>
+        )}
+      </div>
+
+      {/* ── LIVE TAB list (scrollable) ── */}
+      {tab === "live" && (
+        <div>
+          <div style={{ fontSize: 11, color: "#475569", margin: "8px 0" }}>
+            {liveOrders.length} pending order{liveOrders.length !== 1 ? "s" : ""}
           </div>
 
+          <div className="list">
+            {liveOrders.map((o) => (
+              <OrderCard key={o.id} o={o} />
+            ))}
+            {liveOrders.length === 0 && (
+              <div className="text-muted" style={{ marginTop: 12 }}>
+                No pending orders today.
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+      {/* ── HISTORY TAB list (scrollable) ── */}
+      {tab === "history" && (
+        <div>
           <div style={{ fontSize: 11, color: "#475569", margin: "8px 0" }}>
             {histOrders.length} order{histOrders.length !== 1 ? "s" : ""}
           </div>
@@ -461,21 +467,11 @@ function OrdersList({ mode, onBack, onAddOrder, onViewOrder, onViewCustomer }) {
       )}
       {/* Bottom bar */}
       <div
+        className="fixed-bottom-bar compact-bottom-bar"
         style={{
-          position: "fixed",
-          bottom: 0,
-          left: 0,
-          right: 0,
-          background: "#0f1520",
-          borderTop: "1px solid rgba(0,180,216,0.4)",
-          boxShadow: "0 -4px 12px rgba(0,0,0,0.4)",
-          padding: "10px 12px",
           display: "flex",
           justifyContent: "space-between",
           alignItems: "center",
-          zIndex: 100,
-          maxWidth: 480,
-          margin: "0 auto",
         }}
       >
         {tab === "live" ? (

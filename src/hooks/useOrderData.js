@@ -6,14 +6,36 @@ import { readJson, writeJson } from "../utils/scopedStorage";
 const STORAGE_KEY = "nomad_orders_v1";
 
 const clone = (arr) => (Array.isArray(arr) ? arr.map((x) => ({ ...x })) : arr);
+const SAMPLE_ORDER_SIGNATURE = MOCK_ORDERS.map((o) => `${o.id}|${o.orderNumber}`).join("||");
+const looksLikeDemoOrders = (arr) => {
+  if (!Array.isArray(arr) || arr.length !== MOCK_ORDERS.length) return false;
+  const signature = arr.map((o) => `${o?.id}|${o?.orderNumber}`).join("||");
+  return signature === SAMPLE_ORDER_SIGNATURE;
+};
 
 export function useOrderData() {
   const { mode, shopId, isDemoMode } = useAppMode();
   const [orders, setOrders] = useState(() => {
     const stored = readJson(STORAGE_KEY, mode, shopId);
-    if (Array.isArray(stored)) return stored;
+    if (Array.isArray(stored)) {
+      if (!isDemoMode && looksLikeDemoOrders(stored)) return [];
+      return stored;
+    }
     return isDemoMode ? clone(MOCK_ORDERS) : [];
   });
+
+  useEffect(() => {
+    const stored = readJson(STORAGE_KEY, mode, shopId);
+    if (Array.isArray(stored)) {
+      if (!isDemoMode && looksLikeDemoOrders(stored)) {
+        setOrders([]);
+        return;
+      }
+      setOrders(stored);
+      return;
+    }
+    setOrders(isDemoMode ? clone(MOCK_ORDERS) : []);
+  }, [mode, shopId, isDemoMode]);
 
   useEffect(() => {
     if (!Array.isArray(orders)) return;

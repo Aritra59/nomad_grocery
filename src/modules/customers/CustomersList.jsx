@@ -118,37 +118,35 @@ function CustomersList({ mode, onBack, onViewCustomer, onAddCustomer }) {
     <div style={{ paddingBottom: 80 }}>
       {modal && <AppModal type={modal.type} title={modal.title} message={modal.message} onConfirm={modal.onConfirm} confirmLabel="OK" />}
 
-      {/* Header row */}
-      <div className="page-header-row">
-        <span className="back-arrow-gradient" onClick={onBack}>
-          <BackIcon size={20} strokeWidth={3} />
-        </span>
-
-        <div className="page-title-pill" style={{ padding: "5px 14px" }}>
-          {monthName} · 1–{new Date().getDate()} {new Date().toLocaleString("en-IN", { month: "short" })}
+      {/* Sticky: header + search + sort + filters — only customer list scrolls */}
+      <div className="sticky-header" style={{ marginBottom: 8 }}>
+        <div className="page-header-row" style={{ marginBottom: 10 }}>
+          <span className="back-arrow-gradient" onClick={onBack}>
+            <BackIcon size={20} strokeWidth={3} />
+          </span>
+          <div className="page-title-pill" style={{ padding: "5px 14px" }}>
+            {monthName} · 1–{new Date().getDate()} {new Date().toLocaleString("en-IN", { month: "short" })}
+          </div>
+          <div className="stat-row" style={{ margin: 0, flex: 1, justifyContent: "flex-end" }}>
+            <div className="stat-pill">
+              <span className="stat-pill-label">Customers</span>
+              <span className="stat-pill-value">{filtered.length}</span>
+            </div>
+            <div className="stat-pill">
+              <span className="stat-pill-label">Orders</span>
+              <span className="stat-pill-value">{totalOrdersCount}</span>
+            </div>
+            <div className="stat-pill">
+              <span className="stat-pill-label">Amt/Credit</span>
+              <span className="stat-pill-value">
+                <span className="green">₹{totalAmountSum}</span>
+                {totalCreditSum > 0 && <span className="red"> / ₹{totalCreditSum}</span>}
+              </span>
+            </div>
+          </div>
         </div>
-        <div className="stat-row" style={{ margin: 0, flex: 1, justifyContent: "flex-end" }}>
-          <div className="stat-pill">
-            <span className="stat-pill-label">Customers</span>
-            <span className="stat-pill-value">{filtered.length}</span>
-          </div>
-          <div className="stat-pill">
-            <span className="stat-pill-label">Orders</span>
-            <span className="stat-pill-value">{totalOrdersCount}</span>
-          </div>
-          <div className="stat-pill">
-            <span className="stat-pill-label">Amt/Credit</span>
-            <span className="stat-pill-value">
-              <span className="green">₹{totalAmountSum}</span>
-              {totalCreditSum > 0 && <span className="red"> / ₹{totalCreditSum}</span>}
-            </span>
-          </div>
-        </div>
-      </div>
 
-      {/* Search + Sort + Add — sticky */}
-      <div style={{ position: "sticky", top: 0, zIndex: 40, background: "#0d1117", paddingBottom: 8, borderBottom: "1px solid rgba(0,180,216,0.1)" }}>
-        <div className="search-row">
+        <div className="search-row" style={{ marginBottom: 8 }}>
           <input className="input" style={{ flex: 1 }} placeholder="Name or mobile…" value={search} onChange={(e) => setSearch(e.target.value)} />
           <button className={"mic-btn" + (listening ? " listening" : "")} onClick={listening ? stop : start}>
             <Icon name="Mic" size={16} />
@@ -158,8 +156,7 @@ function CustomersList({ mode, onBack, onViewCustomer, onAddCustomer }) {
           </button>
         </div>
 
-        {/* Sort pills */}
-        <div style={{ display: "flex", gap: 6, marginBottom: 10 }}>
+        <div style={{ display: "flex", gap: 6, marginBottom: 8 }}>
           {[
             ["name", "Name"],
             ["orders", "Orders"],
@@ -170,61 +167,59 @@ function CustomersList({ mode, onBack, onViewCustomer, onAddCustomer }) {
             </button>
           ))}
         </div>
-      </div>
 
-      {/* 3 filters */}
-      <div className="filter-row">
-        <div className="filter-col">
-          <div className="filter-label">Period</div>
-          <SelectField
-            value={periodFilter}
-            onChange={(e) => {
-              setPeriodFilter(e.target.value);
-              setShowCustom(e.target.value === "custom");
-            }}
-            selectStyle={{ fontSize: 11 }}
-          >
-            <option value="all">All</option>
-            <option value="today">Today</option>
-            <option value="week">This Week</option>
-            <option value="month">This Month</option>
-            <option value="year">This Year</option>
-            <option value="custom">Custom</option>
-          </SelectField>
-        </div>
-        <div className="filter-col">
-          <div className="filter-label">Status</div>
-          <SelectField value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)} selectStyle={{ fontSize: 11 }}>
-            <option value="all">All</option>
-            <option value="completed">Completed</option>
-            <option value="cancelled">Cancelled</option>
-          </SelectField>
-        </div>
-        <div className="filter-col">
-          <div className="filter-label">Payment</div>
-          <SelectField value={payFilter} onChange={(e) => setPayFilter(e.target.value)} selectStyle={{ fontSize: 11 }}>
-            <option value="all">All</option>
-            <option value="paid">Paid</option>
-            <option value="credit">Credit</option>
-          </SelectField>
-        </div>
-      </div>
-
-      {/* Custom date range */}
-      {showCustom && (
-        <div style={{ display: "flex", gap: 8, marginBottom: 10 }}>
-          <div style={{ flex: 1 }}>
-            <div className="filter-label">From</div>
-            <input className="input" type="date" value={customFrom} onChange={(e) => setCustomFrom(e.target.value)} style={{ fontSize: 11 }} />
+        <div className="filter-row">
+          <div className="filter-col">
+            <div className="filter-label">Period</div>
+            <SelectField
+              value={periodFilter}
+              onChange={(e) => {
+                setPeriodFilter(e.target.value);
+                setShowCustom(e.target.value === "custom");
+              }}
+              selectStyle={{ fontSize: 11 }}
+            >
+              <option value="all">All</option>
+              <option value="today">Today</option>
+              <option value="week">This Week</option>
+              <option value="month">This Month</option>
+              <option value="year">This Year</option>
+              <option value="custom">Custom</option>
+            </SelectField>
           </div>
-          <div style={{ flex: 1 }}>
-            <div className="filter-label">To</div>
-            <input className="input" type="date" value={customTo} onChange={(e) => setCustomTo(e.target.value)} style={{ fontSize: 11 }} />
+          <div className="filter-col">
+            <div className="filter-label">Status</div>
+            <SelectField value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)} selectStyle={{ fontSize: 11 }}>
+              <option value="all">All</option>
+              <option value="completed">Completed</option>
+              <option value="cancelled">Cancelled</option>
+            </SelectField>
+          </div>
+          <div className="filter-col">
+            <div className="filter-label">Payment</div>
+            <SelectField value={payFilter} onChange={(e) => setPayFilter(e.target.value)} selectStyle={{ fontSize: 11 }}>
+              <option value="all">All</option>
+              <option value="paid">Paid</option>
+              <option value="credit">Credit</option>
+            </SelectField>
           </div>
         </div>
-      )}
 
-      {/* Customer cards */}
+        {showCustom && (
+          <div style={{ display: "flex", gap: 8, marginTop: 8 }}>
+            <div style={{ flex: 1 }}>
+              <div className="filter-label">From</div>
+              <input className="input" type="date" value={customFrom} onChange={(e) => setCustomFrom(e.target.value)} style={{ fontSize: 11 }} />
+            </div>
+            <div style={{ flex: 1 }}>
+              <div className="filter-label">To</div>
+              <input className="input" type="date" value={customTo} onChange={(e) => setCustomTo(e.target.value)} style={{ fontSize: 11 }} />
+            </div>
+          </div>
+        )}
+      </div>
+
+      {/* Customer cards — scrollable */}
       <div className="list">
         {filtered.map((c) => {
           const stats = getCustomerStats(c.mobile);
@@ -273,20 +268,11 @@ function CustomersList({ mode, onBack, onViewCustomer, onAddCustomer }) {
       </div>
       {/* Bottom bar */}
       <div
+        className="fixed-bottom-bar compact-bottom-bar"
         style={{
-          position: "fixed",
-          bottom: 0,
-          left: 0,
-          right: 0,
-          background: "#0a0f18",
-          borderTop: "1px solid rgba(0,180,216,0.15)",
-          padding: "10px 12px",
           display: "flex",
           justifyContent: "space-between",
           alignItems: "center",
-          zIndex: 100,
-          maxWidth: 480,
-          margin: "0 auto",
         }}
       >
         <div style={{ textAlign: "center" }}>

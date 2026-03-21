@@ -5,14 +5,36 @@ import { readJson, writeJson } from "../utils/scopedStorage";
 
 const STORAGE_KEY = "nomad_customers_v1";
 const clone = (arr) => (Array.isArray(arr) ? arr.map((x) => ({ ...x })) : arr);
+const SAMPLE_CUSTOMER_SIGNATURE = MOCK_CUSTOMERS.map((c) => `${c.id}|${c.mobile}`).join("||");
+const looksLikeDemoCustomers = (arr) => {
+  if (!Array.isArray(arr) || arr.length !== MOCK_CUSTOMERS.length) return false;
+  const signature = arr.map((c) => `${c?.id}|${c?.mobile}`).join("||");
+  return signature === SAMPLE_CUSTOMER_SIGNATURE;
+};
 
 export function useCustomersData() {
   const { mode, shopId, isDemoMode } = useAppMode();
   const [customers, setCustomers] = useState(() => {
     const stored = readJson(STORAGE_KEY, mode, shopId);
-    if (Array.isArray(stored)) return stored;
+    if (Array.isArray(stored)) {
+      if (!isDemoMode && looksLikeDemoCustomers(stored)) return [];
+      return stored;
+    }
     return isDemoMode ? clone(MOCK_CUSTOMERS) : [];
   });
+
+  useEffect(() => {
+    const stored = readJson(STORAGE_KEY, mode, shopId);
+    if (Array.isArray(stored)) {
+      if (!isDemoMode && looksLikeDemoCustomers(stored)) {
+        setCustomers([]);
+        return;
+      }
+      setCustomers(stored);
+      return;
+    }
+    setCustomers(isDemoMode ? clone(MOCK_CUSTOMERS) : []);
+  }, [mode, shopId, isDemoMode]);
 
   useEffect(() => {
     if (!Array.isArray(customers)) return;

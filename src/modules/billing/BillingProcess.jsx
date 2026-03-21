@@ -4,29 +4,18 @@ import { calculateAmount, generateUPIUrl, generateWhatsAppUrl, isSlotPurchaseVal
 import BillingPlans from "./BillingPlans";
 import AppModal from "../../components/common/AppModal";
 import Icon from "../../components/common/Icon";
-import { updateSheetSlotsByCode } from "../../hooks/useSheetSync";
 
-function BillingProcess({ packs = [], sheetCode, onClose, onSlotsActivated }) {
+function BillingProcess({ packs = [], onClose }) {
   const [selectedPlan, setSelectedPlan] = useState(null);
   const [termsAccepted, setTermsAccepted] = useState(false);
   const [showTerms, setShowTerms] = useState(false);
   const [modal, setModal] = useState(null);
-  const [transactionId, setTransactionId] = useState("");
-  const [activating, setActivating] = useState(false);
 
   const amount = selectedPlan ? selectedPlan.amount ?? calculateAmount(selectedPlan.slots, selectedPlan.days) : 0;
   const activeSlots = getTotalActiveSlots(packs);
   // Validate based on total slots after the selected purchase (existing + new).
   const totalSlots = selectedPlan ? activeSlots + selectedPlan.slots : activeSlots;
   const canProceed = isSlotPurchaseValid(totalSlots, termsAccepted);
-
-  const getNextAvailablePackId = () => {
-    const activeIds = new Set((packs || []).map((p) => p.id));
-    for (let i = 1; i <= 3; i++) {
-      if (!activeIds.has(i)) return i;
-    }
-    return null;
-  };
 
   const handleCopyUPI = async () => {
     if (!canProceed) {
@@ -61,6 +50,15 @@ function BillingProcess({ packs = [], sheetCode, onClose, onSlotsActivated }) {
       setModal({ type: "warning", title: "Select a Plan", message: "Please select a slot plan before proceeding.", onConfirm: () => setModal(null) });
       return;
     }
+    if (activeSlots === 0 && selectedPlan.slots < 100) {
+      setModal({
+        type: "warning",
+        title: "Minimum 100 Slots Required",
+        message: "For first-time activation, please select at least 100 slots.",
+        onConfirm: () => setModal(null),
+      });
+      return;
+    }
     if (!canProceed) {
       setModal({
         type: "warning",
@@ -81,67 +79,6 @@ function BillingProcess({ packs = [], sheetCode, onClose, onSlotsActivated }) {
     }
     const url = generateWhatsAppUrl(selectedPlan.slots, selectedPlan.days, amount);
     window.open(url, "_blank");
-  };
-
-  const handleActivateAndSync = async () => {
-    if (!selectedPlan) {
-      setModal({ type: "warning", title: "Select a Plan", message: "Please select a slot plan first.", onConfirm: () => setModal(null) });
-      return;
-    }
-    if (!canProceed) {
-      setModal({
-        type: "warning",
-        title: "Minimum 100 Slots Required",
-        message: "Minimum 100 slots required and accept terms.",
-        onConfirm: () => setModal(null),
-      });
-      return;
-    }
-    if (!sheetCode || !String(sheetCode).trim()) {
-      setModal({ type: "error", title: "Not Logged In", message: "Sheet code missing. Please login again.", onConfirm: () => setModal(null) });
-      return;
-    }
-
-    const packId = getNextAvailablePackId();
-    if (!packId) {
-      setModal({
-        type: "warning",
-        title: "Slots Full",
-        message: "All pack slots (pack1..pack3) are currently active. Wait for expiry or contact support.",
-        onConfirm: () => setModal(null),
-      });
-      return;
-    }
-
-    setActivating(true);
-    try {
-      await updateSheetSlotsByCode({
-        code: sheetCode,
-        packId,
-        slots: selectedPlan.slots,
-        days: selectedPlan.days,
-        transactionId,
-      });
-
-      setModal({
-        type: "success",
-        title: "Excel Updated",
-        message: "Slots & expiry are synced. Refreshing dashboard…",
-        onConfirm: () => {
-          setModal(null);
-          onSlotsActivated?.(sheetCode);
-        },
-      });
-    } catch (err) {
-      setModal({
-        type: "error",
-        title: "Excel Sync Failed",
-        message: err?.message || "Could not update sheet. Please check API configuration.",
-        onConfirm: () => setModal(null),
-      });
-    } finally {
-      setActivating(false);
-    }
   };
 
   return (
@@ -231,17 +168,6 @@ function BillingProcess({ packs = [], sheetCode, onClose, onSlotsActivated }) {
         </span>
       </div>
 
-      <div style={{ marginBottom: 10 }}>
-        <div style={{ fontSize: 11, color: "#64748b", marginBottom: 8, fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.05em" }}>UPI Transaction ID</div>
-        <input
-          className="input"
-          placeholder="e.g. 9QW123456789 (optional)"
-          value={transactionId}
-          onChange={(e) => setTransactionId(e.target.value)}
-          style={{ textAlign: "left" }}
-        />
-      </div>
-
       <div style={{ display: "flex", gap: 8, marginBottom: 10 }}>
         <button
           className="btn btn-outline"
@@ -263,23 +189,6 @@ function BillingProcess({ packs = [], sheetCode, onClose, onSlotsActivated }) {
         <Icon name="Send" size={14} />
         <span>Send Payment Details on WhatsApp</span>
       </button>
-
-      <button
-        className="btn btn-primary"
-        style={{
-          width: "100%",
-          fontSize: 12,
-          marginTop: 10,
-          opacity: activating ? 0.7 : !canProceed ? 0.45 : 1,
-          cursor: activating || !canProceed ? "not-allowed" : "pointer",
-        }}
-        onClick={handleActivateAndSync}
-        disabled={activating || !canProceed}
-      >
-        {activating ? "Syncing to Excel…" : "Activate & Sync to Excel"}
-      </button>
-
-      <div style={{ fontSize: 10, color: "#475569", textAlign: "center", marginTop: 10 }}>After payment send screenshot on WhatsApp. Activation within 24 hours.</div>
     </div>
   );
 }

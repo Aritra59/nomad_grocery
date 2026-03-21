@@ -24,16 +24,42 @@ const saveSheetData = (data) => {
   } catch {}
 };
 
+const parseCSVLine = (line) => {
+  const cells = [];
+  let current = "";
+  let inQuotes = false;
+  for (let i = 0; i < line.length; i++) {
+    const char = line[i];
+    if (char === '"') {
+      if (inQuotes && line[i + 1] === '"') {
+        current += '"';
+        i += 1;
+      } else {
+        inQuotes = !inQuotes;
+      }
+      continue;
+    }
+    if (char === "," && !inQuotes) {
+      cells.push(current.trim());
+      current = "";
+      continue;
+    }
+    current += char;
+  }
+  cells.push(current.trim());
+  return cells;
+};
+
 const parseCSVToRows = (csv) => {
   const lines = csv
     .trim()
-    .split("\n")
-    .map((l) => l.split(",").map((v) => v.replace(/^"|"$/g, "").trim()));
+    .split(/\r?\n/)
+    .map((line) => parseCSVLine(line));
   if (lines.length < 2) return [];
-  const headers = lines[0].map((h) => h.toLowerCase().replace(/\s+/g, "_"));
+  const headers = lines[0].map((h) => String(h || "").toLowerCase().replace(/\s+/g, "_"));
   return lines
     .slice(1)
-    .filter((r) => r.some((v) => v))
+    .filter((r) => r.some((v) => String(v || "").trim()))
     .map((row) => {
       const obj = {};
       headers.forEach((h, i) => {
@@ -41,6 +67,17 @@ const parseCSVToRows = (csv) => {
       });
       return obj;
     });
+};
+
+const getPackIdsFromSeller = (seller = {}) => {
+  const ids = new Set();
+  Object.keys(seller).forEach((key) => {
+    const m = String(key || "").toLowerCase().match(/^pack(\d+)_(slots|availed|available|expiry)$/);
+    if (m) ids.add(Number(m[1]));
+  });
+  return Array.from(ids)
+    .filter((id) => Number.isFinite(id) && id > 0)
+    .sort((a, b) => a - b);
 };
 
 // Get initials — same logic as catalogUtils
@@ -83,9 +120,10 @@ export async function syncSheetByCode(code) {
   today.setHours(0, 0, 0, 0);
   const packs = [];
 
-  for (let i = 1; i <= 3; i++) {
+  const packIds = getPackIdsFromSeller(seller);
+  for (const i of packIds) {
     const slots = parseInt(seller[`pack${i}_slots`] || "0", 10);
-    const availed = seller[`pack${i}_availed`] || "";
+    const availed = seller[`pack${i}_availed`] || seller[`pack${i}_available`] || "";
     const expiry = seller[`pack${i}_expiry`] || "";
 
     if (slots > 0 && expiry) {
@@ -148,7 +186,7 @@ function addDaysToLocalISODate(isoDate, days) {
   return toLocalISODate(date);
 }
 
-// Update packs (pack1..pack3) back into your spreadsheet using your backend endpoint.
+// Update pack slots back into your spreadsheet using your backend endpoint.
 export async function updateSheetSlotsByCode({ code, packId, slots, days, transactionId, extraMeta }) {
   if (!SHEET_SLOT_UPDATE_API_URL) {
     throw new Error("Sheet write endpoint not configured. Set REACT_APP_SHEET_SLOT_UPDATE_URL.");
@@ -156,7 +194,7 @@ export async function updateSheetSlotsByCode({ code, packId, slots, days, transa
   if (!code || !String(code).trim()) throw new Error("No shop code provided");
 
   const pid = Number(packId);
-  if (![1, 2, 3].includes(pid)) throw new Error("Invalid packId. Expected 1, 2, or 3.");
+  if (!Number.isFinite(pid) || pid <= 0) throw new Error("Invalid packId.");
 
   const todayISO = toLocalISODate(new Date());
   const expiryISO = addDaysToLocalISODate(todayISO, days);

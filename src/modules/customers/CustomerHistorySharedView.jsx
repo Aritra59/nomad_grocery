@@ -1,38 +1,37 @@
 import React, { useEffect, useState, useMemo } from "react";
 import Icon from "../../components/common/Icon";
 import SelectField from "../../components/common/SelectField";
+import { getCustomerHistoryFromUrl } from "../../utils/catalogUtils";
 
 function CustomerHistorySharedView({ customers, orders, sharedCustomerId }) {
   const [customer, setCustomer] = useState(null);
   const [notFound, setNotFound] = useState(false);
   const [periodFilter, setPeriodFilter] = useState("all");
+  const historyLinkData = useMemo(() => getCustomerHistoryFromUrl(), []);
+  const payloadOrders = Array.isArray(historyLinkData?.payload?.orders) ? historyLinkData.payload.orders : null;
 
   useEffect(() => {
-    const params = new URLSearchParams(window.location.search);
-    const id = sharedCustomerId || params.get("customerId");
-    if (!id) {
+    const { customerId, payload } = historyLinkData;
+    if (payload?.customer && Array.isArray(payload?.orders)) {
+      setCustomer(payload.customer);
+      setNotFound(false);
+      return;
+    }
+    const id = sharedCustomerId || customerId;
+    if (!id || !Array.isArray(customers)) {
       setNotFound(true);
       return;
     }
     const found = customers.find((c) => String(c.id) === String(id));
     if (found) setCustomer(found);
     else setNotFound(true);
-  }, [customers]);
+  }, [customers, sharedCustomerId, historyLinkData]);
 
-  if (notFound) {
-    return (
-      <div className="p-4 text-center text-muted">
-        <div className="fs-1">🔍</div>
-        <div>Customer not found or link is invalid.</div>
-      </div>
-    );
-  }
-
-  if (!customer) {
-    return <div className="p-4 text-center text-muted">Loading...</div>;
-  }
-
-  const customerOrdersAll = orders.filter((o) => String(o.customerId) === String(customer.id) || o.customerName === customer.name);
+  const customerOrdersAll = useMemo(() => {
+    if (payloadOrders) return payloadOrders;
+    if (!customer) return [];
+    return orders.filter((o) => String(o.customerId) === String(customer.id) || o.customerName === customer.name || o.mobile === customer.mobile);
+  }, [payloadOrders, customer, orders]);
 
   const customerOrders = useMemo(() => {
     let list = [...customerOrdersAll];
@@ -58,6 +57,19 @@ function CustomerHistorySharedView({ customers, orders, sharedCustomerId }) {
   const totalPaid = customerOrders.filter((o) => o.paymentStatus === "paid").reduce((sum, o) => sum + (o.total || 0), 0);
 
   const totalOrders = customerOrders.length;
+
+  if (notFound) {
+    return (
+      <div className="p-4 text-center text-muted">
+        <div className="fs-1">🔍</div>
+        <div>Customer not found or link is invalid.</div>
+      </div>
+    );
+  }
+
+  if (!customer) {
+    return <div className="p-4 text-center text-muted">Loading...</div>;
+  }
 
   return (
       <div style={{ maxWidth: 480, margin: "0 auto", fontFamily: "system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif", minHeight: "100vh", background: "#0d1117", color: "#e2e8f0" }}>

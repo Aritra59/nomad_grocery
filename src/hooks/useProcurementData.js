@@ -21,6 +21,13 @@ export function useProcurementData() {
     return Array.isArray(stored) ? stored : [];
   });
 
+  useEffect(() => {
+    const storedItems = readJson(STORAGE_KEY, mode, shopId);
+    const storedSavedOrders = readJson(SAVED_ORDERS_KEY, mode, shopId);
+    setItems(Array.isArray(storedItems) ? storedItems : []);
+    setSavedOrders(Array.isArray(storedSavedOrders) ? storedSavedOrders : []);
+  }, [mode, shopId]);
+
   // Centralized cleanup: inventory deletes should remove related procurement items/orders.
   useEffect(() => {
     const handler = (evt) => {
@@ -185,7 +192,7 @@ export function useProcurementData() {
     setItems((prev) => prev.map((i) => (i.productName === productName && i.orderNum === orderNum ? { ...i, addedToOrder: false, orderNum: null } : i)));
   };
 
-  const pendingCount = items.filter((i) => i.status === "pending").length;
+  const pendingCount = items.filter((i) => i.status === "pending" && !i.addedToOrder).length;
   const orderedCount = items.filter((i) => i.status === "ordered").length;
   const addedToOrderCount = items.filter((i) => i.addedToOrder).length;
 

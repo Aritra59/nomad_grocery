@@ -297,17 +297,8 @@ function InventoryList({ mode, onBack, onAddProduct, onEditProduct, isOverLimit,
     <div style={{ paddingBottom: 70 }}>
       {modal && <AppModal type={modal.type} title={modal.title} message={modal.message} onConfirm={modal.onConfirm} onCancel={modal.onCancel} confirmLabel={modal.confirmLabel || "OK"} />}
 
-      {/* ── STICKY HEADER ── */}
-      <div
-        style={{
-          position: "sticky",
-          top: 0,
-          zIndex: 40,
-          background: "#0d1117",
-          paddingBottom: 8,
-          borderBottom: "1px solid rgba(0,180,216,0.1)",
-        }}
-      >
+      {/* Sticky: KPIs + search + tabs + filter/sort — only product list scrolls */}
+      <div className="sticky-header">
         {/* KPI Row 1 — Inventory */}
         <div style={{ marginBottom: 4 }}>
           <KpiRow label="Inventory" count={invKpi.count} low={invKpi.low} outOfStock={invKpi.outOfStock} fast={invKpi.fast} borderColor="#00b4d8" />
@@ -512,24 +503,16 @@ function InventoryList({ mode, onBack, onAddProduct, onEditProduct, isOverLimit,
       </div>
       {/* Bottom bar — fixed */}
       <div
+        className="fixed-bottom-bar compact-bottom-bar"
         style={{
-          position: "fixed",
-          bottom: 0,
-          left: 0,
-          right: 0,
-          background: "#0f1520",
-          borderTop: "1px solid rgba(0,180,216,0.4)",
-          boxShadow: "0 -4px 12px rgba(0,0,0,0.4)",
-          padding: "10px 12px",
           display: "flex",
           justifyContent: "space-between",
           alignItems: "center",
-          zIndex: 100,
-          maxWidth: 480,
-          margin: "0 auto",
         }}
       >
-        <div style={{ fontSize: 12, fontWeight: 600, color: "#e2e8f0" }}>Total: {items.length} products</div>
+        <div style={{ fontSize: 12, fontWeight: 600, color: "#e2e8f0" }}>
+          Total: {viewMode === "catalog" ? catalogItems.length : items.length} {viewMode === "catalog" ? "catalog" : "inventory"} products
+        </div>
         <button className="btn btn-primary" style={{ fontSize: 11 }} onClick={onViewCatalog}>
           Create Catalog
         </button>
